@@ -5,13 +5,14 @@ import com.github.princesslana.smalld.SmallD;
 public class PingBot {
 
   public static void main(String[] args) {
-    SmallD smalld = SmallD.create(System.getenv("SMALLD_TOKEN"));
+    SmallD smalld = new SmallD(System.getenv("SMALLD_TOKEN"));
 
-    /*smalld.onWebsocketEvent(evt -> {
+    /*smalld.onGatewayEvent((evt, conn) -> {
       if (evt.getType().equals("MESSAGE_CREATE")) {
-        smalld.post("/message", "");
+        conn.post("/message", "");
       }
     });*/
 
+    smalld.run();
   }
 }

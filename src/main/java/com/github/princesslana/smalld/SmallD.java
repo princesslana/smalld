@@ -8,18 +8,34 @@ import okhttp3.Response;
 
 public class SmallD {
 
-  private final Configuration config;
+  private static final String V6_BASE_URL = "https://discordapp.com/api/v6";
 
-  private SmallD(Configuration config) {
-    this.config = config;
+  private final String token;
+
+  private String baseUrl = V6_BASE_URL;
+
+  public SmallD(String token) {
+    this.token = token;
   }
 
-  private void connect() {}
+  public void setBaseUrl(String baseUrl) {
+    this.baseUrl = baseUrl;
+  }
+
+  public Connection connect() {
+    return null;
+  }
+
+  public void run() {
+    try (Connection c = connect()) {
+      c.await();
+    }
+  }
 
   private String getGatewayUrl() {
     try {
       OkHttpClient client = new OkHttpClient();
-      Request request = new Request.Builder().url(config.getBaseUrl() + "/gateway").build();
+      Request request = new Request.Builder().url(baseUrl + "/gateway").build();
 
       Response response = client.newCall(request).execute();
 
@@ -27,17 +43,5 @@ public class SmallD {
     } catch (IOException e) {
       throw new SmallDException(e);
     }
-  }
-
-  public static SmallD create(String token) {
-    return create(Configuration.v6(token));
-  }
-
-  public static SmallD create(Configuration config) {
-    SmallD smallD = new SmallD(config);
-
-    smallD.connect();
-
-    return smallD;
   }
 }

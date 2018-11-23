@@ -23,6 +23,7 @@ public class SmallD {
   }
 
   public Connection connect() {
+    getGatewayUrl();
     return null;
   }
 
@@ -35,7 +36,7 @@ public class SmallD {
   private String getGatewayUrl() {
     try {
       OkHttpClient client = new OkHttpClient();
-      Request request = new Request.Builder().url(baseUrl + "/gateway").build();
+      Request request = new Request.Builder().url(baseUrl + "/gateway/bot").build();
 
       Response response = client.newCall(request).execute();
 

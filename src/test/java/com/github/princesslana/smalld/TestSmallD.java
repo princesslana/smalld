@@ -4,6 +4,7 @@ import java.io.IOException;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.mockwebserver.SocketPolicy;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterEach;
@@ -12,11 +13,18 @@ import org.junit.jupiter.api.Test;
 
 public class TestSmallD {
 
+  private static final String TOKEN = "DUMMY_TOKEN";
+
+  private SmallD subject;
+
   private MockWebServer server;
 
   @BeforeEach
-  public void createServer() {
+  public void subject() {
     server = new MockWebServer();
+
+    subject = new SmallD(TOKEN);
+    subject.setBaseUrl(server.url("/api/v6").toString());
   }
 
   @AfterEach
@@ -28,9 +36,7 @@ public class TestSmallD {
   public void connect_shouldSendGetGatewayBotRequest() {
     enqueueGatewayBotResponse();
 
-    SmallD smallD = new SmallD("DUMMY_TOKEN");
-    smallD.setBaseUrl(server.url("/api/v6").toString());
-    try (Connection c = smallD.connect()) {}
+    try (Connection c = subject.connect()) {}
 
     RecordedRequest req = takeRequest();
 
@@ -45,9 +51,7 @@ public class TestSmallD {
   public void connect_shouldIncudeTokenOnGetGatewayBotRequest() {
     enqueueGatewayBotResponse();
 
-    SmallD smallD = new SmallD("DUMMY_TOKEN");
-    smallD.setBaseUrl(server.url("/api/v6").toString());
-    try (Connection c = smallD.connect()) {}
+    try (Connection c = subject.connect()) {}
 
     RecordedRequest req = takeRequest();
 
@@ -57,21 +61,25 @@ public class TestSmallD {
   @Test
   public void connect_whenBadJsonInGetGatewayBotResponse_shouldThrowException() {
     server.enqueue(new MockResponse().setBody("abc"));
-
-    SmallD smallD = new SmallD("DUMMY_TOKEN");
-    smallD.setBaseUrl(server.url("/api/v6").toString());
-
-    Assertions.assertThatExceptionOfType(SmallDException.class).isThrownBy(() -> smallD.connect());
+    Assertions.assertThatExceptionOfType(SmallDException.class).isThrownBy(subject::connect);
   }
 
   @Test
   public void connect_whenNoUrlInGetGatewayBotResponse_shouldThrowException() {
     server.enqueue(new MockResponse().setBody("{}"));
+    Assertions.assertThatExceptionOfType(SmallDException.class).isThrownBy(subject::connect);
+  }
 
-    SmallD smallD = new SmallD("DUMMY_TOKEN");
-    smallD.setBaseUrl(server.url("/api/v6").toString());
+  @Test
+  public void connect_when500_shouldThrowException() {
+    server.enqueue(new MockResponse().setResponseCode(500));
+    Assertions.assertThatExceptionOfType(SmallDException.class).isThrownBy(subject::connect);
+  }
 
-    Assertions.assertThatExceptionOfType(SmallDException.class).isThrownBy(() -> smallD.connect());
+  @Test
+  public void connect_whenNoResponse_shouldThrowException() {
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+    Assertions.assertThatExceptionOfType(SmallDException.class).isThrownBy(subject::connect);
   }
 
   private void enqueueGatewayBotResponse() {

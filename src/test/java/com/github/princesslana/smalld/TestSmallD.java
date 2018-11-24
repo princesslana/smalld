@@ -5,6 +5,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,36 @@ public class TestSmallD {
   }
 
   @Test
-  public void connect_shouldGetGatewayBotEndpoint() throws Exception {
+  public void connect_shouldSendGetGatewayBotRequest() {
+    enqueueGatewayBotResponse();
+
+    SmallD smallD = new SmallD("DUMMY_TOKEN");
+    smallD.setBaseUrl(server.url("/api/v6").toString());
+    try (Connection c = smallD.connect()) {}
+
+    RecordedRequest req = takeRequest();
+
+    SoftAssertions.assertSoftly(
+        s -> {
+          s.assertThat(req.getMethod()).isEqualTo("GET");
+          s.assertThat(req.getPath()).isEqualTo("/api/v6/gateway/bot");
+        });
+  }
+
+  @Test
+  public void connect_shouldIncudeTokenOnGetGatewayBotRequest() {
+    enqueueGatewayBotResponse();
+
+    SmallD smallD = new SmallD("DUMMY_TOKEN");
+    smallD.setBaseUrl(server.url("/api/v6").toString());
+    try (Connection c = smallD.connect()) {}
+
+    RecordedRequest req = takeRequest();
+
+    Assertions.assertThat(req.getHeader("Authorization")).isEqualTo("Bot DUMMY_TOKEN");
+  }
+
+  private void enqueueGatewayBotResponse() {
     String getGatewayBotResponse =
         "{     \"url\": \"wss://gateway.discord.gg/\", "
             + "\"shards\": 9, "
@@ -35,19 +65,15 @@ public class TestSmallD {
             + "} }";
 
     server.enqueue(new MockResponse().setBody(getGatewayBotResponse));
+  }
 
-    server.start();
-
-    SmallD smallD = new SmallD("DUMMY_TOKEN");
-
-    smallD.setBaseUrl(server.url("/api/v6").toString());
-
-    try (Connection c = smallD.connect()) {}
-
+  private RecordedRequest takeRequest() {
     Assertions.assertThat(server.getRequestCount()).isEqualTo(1);
 
-    RecordedRequest req = server.takeRequest();
-    Assertions.assertThat(req.getMethod()).isEqualTo("GET");
-    Assertions.assertThat(req.getPath()).isEqualTo("/api/v6/gateway/bot");
+    try {
+      return server.takeRequest();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

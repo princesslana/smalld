@@ -36,7 +36,11 @@ public class SmallD {
   private String getGatewayUrl() {
     try {
       OkHttpClient client = new OkHttpClient();
-      Request request = new Request.Builder().url(baseUrl + "/gateway/bot").build();
+      Request request =
+          new Request.Builder()
+              .url(baseUrl + "/gateway/bot")
+              .header("Authorization", "Bot " + token)
+              .build();
 
       Response response = client.newCall(request).execute();
 

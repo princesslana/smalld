@@ -1,6 +1,7 @@
 package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
+import com.eclipsesource.json.ParseException;
 import java.io.IOException;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -28,12 +29,12 @@ public class SmallD {
   }
 
   public void run() {
-    try (Connection c = connect()) {
-      c.await();
-    }
+    // try (Connection c = connect()) {
+    //  c.await();
+    // }
   }
 
-  private String getGatewayUrl() {
+  private void getGatewayUrl() {
     try {
       OkHttpClient client = new OkHttpClient();
       Request request =
@@ -44,8 +45,14 @@ public class SmallD {
 
       Response response = client.newCall(request).execute();
 
-      return Json.parse(response.body().charStream()).asObject().getString("url", null);
+      String url = Json.parse(response.body().charStream()).asObject().getString("url", null);
+
+      if (url == null) {
+        throw new SmallDException("No URL in /gateway/bot request");
+      }
     } catch (IOException e) {
+      throw new SmallDException(e);
+    } catch (ParseException e) {
       throw new SmallDException(e);
     }
   }

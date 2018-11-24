@@ -54,6 +54,26 @@ public class TestSmallD {
     Assertions.assertThat(req.getHeader("Authorization")).isEqualTo("Bot DUMMY_TOKEN");
   }
 
+  @Test
+  public void connect_whenBadJsonInGetGatewayBotResponse_shouldThrowException() {
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    SmallD smallD = new SmallD("DUMMY_TOKEN");
+    smallD.setBaseUrl(server.url("/api/v6").toString());
+
+    Assertions.assertThatExceptionOfType(SmallDException.class).isThrownBy(() -> smallD.connect());
+  }
+
+  @Test
+  public void connect_whenNoUrlInGetGatewayBotResponse_shouldThrowException() {
+    server.enqueue(new MockResponse().setBody("{}"));
+
+    SmallD smallD = new SmallD("DUMMY_TOKEN");
+    smallD.setBaseUrl(server.url("/api/v6").toString());
+
+    Assertions.assertThatExceptionOfType(SmallDException.class).isThrownBy(() -> smallD.connect());
+  }
+
   private void enqueueGatewayBotResponse() {
     String getGatewayBotResponse =
         "{     \"url\": \"wss://gateway.discord.gg/\", "

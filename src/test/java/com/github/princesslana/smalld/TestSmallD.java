@@ -1,6 +1,12 @@
 package com.github.princesslana.smalld;
 
+import com.eclipsesource.json.Json;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import okhttp3.Response;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -38,7 +44,7 @@ public class TestSmallD {
 
     try (Connection c = subject.connect()) {}
 
-    RecordedRequest req = takeRequest();
+    RecordedRequest req = takeRequest(1);
 
     SoftAssertions.assertSoftly(
         s -> {
@@ -53,7 +59,7 @@ public class TestSmallD {
 
     try (Connection c = subject.connect()) {}
 
-    RecordedRequest req = takeRequest();
+    RecordedRequest req = takeRequest(1);
 
     Assertions.assertThat(req.getHeader("Authorization")).isEqualTo("Bot DUMMY_TOKEN");
   }
@@ -82,24 +88,46 @@ public class TestSmallD {
     Assertions.assertThatExceptionOfType(SmallDException.class).isThrownBy(subject::connect);
   }
 
+  @Test
+  public void connect_shouldOpenWebSocketToGatewayBotUrl() {
+    CountDownLatch gate = new CountDownLatch(1);
+
+    enqueueGatewayBotResponse();
+    server.enqueue(
+        new MockResponse()
+            .withWebSocketUpgrade(
+                new WebSocketListener() {
+                  public void onOpen(WebSocket webSocket, Response response) {
+                    gate.countDown();
+                  }
+                }));
+
+    try (Connection c = subject.connect()) {}
+
+    try {
+      gate.await(5, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Assertions.fail("Web Socket was not opened");
+    }
+  }
+
   private void enqueueGatewayBotResponse() {
-    String getGatewayBotResponse =
-        "{     \"url\": \"wss://gateway.discord.gg/\", "
-            + "\"shards\": 9, "
-            + "\"session_start_limit\": { "
-            + "  \"total\": 1000, "
-            + "  \"remaining\": 999, "
-            + "  \"reset_after\": 14400000 "
-            + "} }";
+    String getGatewayBotResponse = Json.object().add("url", server.url("/").toString()).toString();
 
     server.enqueue(new MockResponse().setBody(getGatewayBotResponse));
   }
 
-  private RecordedRequest takeRequest() {
-    Assertions.assertThat(server.getRequestCount()).isEqualTo(1);
+  private RecordedRequest takeRequest(int n) {
+    Assertions.assertThat(server.getRequestCount()).isGreaterThanOrEqualTo(n);
 
     try {
-      return server.takeRequest();
+      RecordedRequest r = null;
+
+      for (int i = 0; i < n; i++) {
+        r = server.takeRequest();
+      }
+
+      return r;
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }

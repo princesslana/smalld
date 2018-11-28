@@ -6,6 +6,7 @@ import java.io.IOException;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.WebSocketListener;
 
 public class SmallD {
 
@@ -14,6 +15,8 @@ public class SmallD {
   private final String token;
 
   private String baseUrl = V6_BASE_URL;
+
+  private final OkHttpClient client = new OkHttpClient();
 
   public SmallD(String token) {
     this.token = token;
@@ -24,7 +27,12 @@ public class SmallD {
   }
 
   public Connection connect() {
-    getGatewayUrl();
+    String gatewayUrl = getGatewayUrl();
+
+    Request request = new Request.Builder().url(gatewayUrl).build();
+
+    client.newWebSocket(request, new WebSocketListener() {});
+
     return null;
   }
 
@@ -34,9 +42,8 @@ public class SmallD {
     // }
   }
 
-  private void getGatewayUrl() {
+  private String getGatewayUrl() {
     try {
-      OkHttpClient client = new OkHttpClient();
       Request request =
           new Request.Builder()
               .url(baseUrl + "/gateway/bot")
@@ -50,6 +57,8 @@ public class SmallD {
       if (url == null) {
         throw new SmallDException("No URL in /gateway/bot request");
       }
+
+      return url;
     } catch (IOException e) {
       throw new SmallDException(e);
     } catch (ParseException e) {

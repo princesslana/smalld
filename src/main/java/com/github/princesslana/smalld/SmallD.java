@@ -3,12 +3,13 @@ package com.github.princesslana.smalld;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.ParseException;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocketListener;
 
-public class SmallD {
+public class SmallD implements AutoCloseable {
 
   private static final String V6_BASE_URL = "https://discordapp.com/api/v6";
 
@@ -18,6 +19,8 @@ public class SmallD {
 
   private final OkHttpClient client = new OkHttpClient();
 
+  private final CountDownLatch closeGate = new CountDownLatch(1);
+
   public SmallD(String token) {
     this.token = token;
   }
@@ -26,14 +29,24 @@ public class SmallD {
     this.baseUrl = baseUrl;
   }
 
-  public Connection connect() {
+  public void connect() {
     String gatewayUrl = getGatewayUrl();
 
     Request request = new Request.Builder().url(gatewayUrl).build();
 
     client.newWebSocket(request, new WebSocketListener() {});
+  }
 
-    return null;
+  public void await() {
+    try {
+      closeGate.await();
+    } catch (InterruptedException e) {
+      // ignore
+    }
+  }
+
+  public void close() {
+    closeGate.countDown();
   }
 
   public void run() {

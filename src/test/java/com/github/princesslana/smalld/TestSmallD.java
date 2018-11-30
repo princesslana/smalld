@@ -1,8 +1,12 @@
 package com.github.princesslana.smalld;
 
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+
 import com.eclipsesource.json.Json;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Response;
 import okhttp3.WebSocket;
@@ -13,9 +17,11 @@ import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
+import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 public class TestSmallD {
 
@@ -34,6 +40,11 @@ public class TestSmallD {
   }
 
   @AfterEach
+  public void closeSmallD() {
+    subject.close();
+  }
+
+  @AfterEach
   public void shutdownServer() throws IOException {
     server.shutdown();
   }
@@ -42,7 +53,7 @@ public class TestSmallD {
   public void connect_shouldSendGetGatewayBotRequest() {
     enqueueGatewayBotResponse();
 
-    try (Connection c = subject.connect()) {}
+    subject.connect();
 
     RecordedRequest req = takeRequest(1);
 
@@ -57,7 +68,7 @@ public class TestSmallD {
   public void connect_shouldIncudeTokenOnGetGatewayBotRequest() {
     enqueueGatewayBotResponse();
 
-    try (Connection c = subject.connect()) {}
+    subject.connect();
 
     RecordedRequest req = takeRequest(1);
 
@@ -102,13 +113,27 @@ public class TestSmallD {
                   }
                 }));
 
-    try (Connection c = subject.connect()) {}
+    subject.connect();
+
+    assertTimeoutPreemptively(Duration.ofSeconds(1), () -> gate.await());
 
     try {
-      gate.await(5, TimeUnit.SECONDS);
+      gate.await(1, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       Assertions.fail("Web Socket was not opened");
     }
+  }
+
+  @Test
+  public void await_shouldCompleteIfClosed() {
+    Executors.newSingleThreadScheduledExecutor()
+        .schedule(subject::close, 200, TimeUnit.MILLISECONDS);
+    assertInOneSecond(subject::await);
+  }
+
+  @Test
+  public void await_shouldNotCompleteIfNotClosed() {
+    assertFails(() -> assertInOneSecond(subject::await));
   }
 
   private void enqueueGatewayBotResponse() {
@@ -131,5 +156,13 @@ public class TestSmallD {
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private void assertFails(ThrowableAssert.ThrowingCallable t) {
+    Assertions.assertThatExceptionOfType(AssertionError.class).isThrownBy(t);
+  }
+
+  private void assertInOneSecond(Executable exec) {
+    assertTimeoutPreemptively(Duration.ofSeconds(1), exec);
   }
 }

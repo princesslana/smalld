@@ -137,7 +137,8 @@ public class TestSmallD {
   }
 
   private void enqueueGatewayBotResponse() {
-    String getGatewayBotResponse = Json.object().add("url", server.url("/").toString()).toString();
+    String wsUrl = "ws://" + server.getHostName() + ":" + server.getPort() + "/";
+    String getGatewayBotResponse = Json.object().add("url", wsUrl).toString();
 
     server.enqueue(new MockResponse().setBody(getGatewayBotResponse));
   }

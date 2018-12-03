@@ -27,6 +27,8 @@ public class SmallD implements AutoCloseable {
 
   private final CountDownLatch closeGate = new CountDownLatch(1);
 
+  private WebSocket gatewayWebSocket;
+
   public SmallD(String token) {
     this.token = token;
   }
@@ -40,14 +42,15 @@ public class SmallD implements AutoCloseable {
 
     Request request = new Request.Builder().url(gatewayUrl).build();
 
-    client.newWebSocket(
-        request,
-        new WebSocketListener() {
-          @Override
-          public void onMessage(WebSocket ws, String text) {
-            listeners.forEach(l -> l.accept(text));
-          }
-        });
+    gatewayWebSocket =
+        client.newWebSocket(
+            request,
+            new WebSocketListener() {
+              @Override
+              public void onMessage(WebSocket ws, String text) {
+                listeners.forEach(l -> l.accept(text));
+              }
+            });
   }
 
   public void onGatewayPayload(Consumer<String> consumer) {
@@ -63,6 +66,9 @@ public class SmallD implements AutoCloseable {
   }
 
   public void close() {
+    if (gatewayWebSocket != null) {
+      gatewayWebSocket.close(1000, "Closed.");
+    }
     closeGate.countDown();
   }
 

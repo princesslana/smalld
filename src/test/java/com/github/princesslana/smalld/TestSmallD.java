@@ -6,6 +6,7 @@ import com.eclipsesource.json.Json;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import okhttp3.mockwebserver.MockResponse;
@@ -19,8 +20,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestSmallD {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TestSmallD.class);
 
   private static final String TOKEN = "DUMMY_TOKEN";
 
@@ -42,8 +47,12 @@ public class TestSmallD {
   }
 
   @AfterEach
-  public void shutdownServer() throws IOException {
-    server.shutdown();
+  public void shutdownServer() {
+    try {
+      server.shutdown();
+    } catch (IOException e) {
+      LOG.warn("Failed to shutdown MockWebServer", e);
+    }
   }
 
   @Test
@@ -141,9 +150,22 @@ public class TestSmallD {
 
   @Test
   public void close_whenConnected_shouldCloseWebSocket() {
+    CountDownLatch openGate = new CountDownLatch(1);
 
-    // queue in websocket recorder
+    enqueueGatewayBotResponse();
+    WebSocketRecorder wsr = enqueueWebSocketResponse();
 
+    wsr.onOpen((ws, r) -> ws.send("DUMMY"));
+    subject.onGatewayPayload(m -> subject.close());
+
+    subject.connect();
+
+    assertInOneSecond(
+        () -> {
+          subject.await();
+          wsr.assertOpened();
+          wsr.assertClosing(1000, "Closed.");
+        });
   }
 
   private WebSocketRecorder enqueueWebSocketResponse() {

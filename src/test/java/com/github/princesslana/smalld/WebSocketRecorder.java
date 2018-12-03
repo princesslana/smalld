@@ -31,12 +31,21 @@ public class WebSocketRecorder extends WebSocketListener {
     received.add(new Message(message));
   }
 
+  @Override
+  public void onClosing(WebSocket ws, int status, String reason) {
+    received.add(new Closing(status, reason));
+  }
+
   public void assertOpened() throws InterruptedException {
     assertThatNext().isEqualTo(new Open());
   }
 
   public void assertMessage(String message) throws InterruptedException {
     assertThatNext().isEqualTo(new Message(message));
+  }
+
+  public void assertClosing(int status, String reason) throws InterruptedException {
+    assertThatNext().isEqualTo(new Closing(status, reason));
   }
 
   private ObjectAssert<Object> assertThatNext() throws InterruptedException {
@@ -88,6 +97,38 @@ public class WebSocketRecorder extends WebSocketListener {
       Message rhs = (Message) other;
 
       return Objects.equals(message, rhs.message);
+    }
+  }
+
+  private static class Closing {
+    private final int status;
+    private final String reason;
+
+    public Closing(int status, String reason) {
+      this.status = status;
+      this.reason = reason;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("Closing(%d, %s)", status, Objects.toString(reason));
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      }
+      if (other == null) {
+        return false;
+      }
+      if (!(other instanceof Closing)) {
+        return false;
+      }
+
+      Closing rhs = (Closing) other;
+
+      return status == rhs.status && Objects.equals(reason, rhs.reason);
     }
   }
 }

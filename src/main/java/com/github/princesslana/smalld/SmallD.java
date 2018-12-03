@@ -3,10 +3,14 @@ package com.github.princesslana.smalld;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.ParseException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 
 public class SmallD implements AutoCloseable {
@@ -18,6 +22,8 @@ public class SmallD implements AutoCloseable {
   private String baseUrl = V6_BASE_URL;
 
   private final OkHttpClient client = new OkHttpClient();
+
+  private final List<Consumer<String>> listeners = new ArrayList<>();
 
   private final CountDownLatch closeGate = new CountDownLatch(1);
 
@@ -34,7 +40,18 @@ public class SmallD implements AutoCloseable {
 
     Request request = new Request.Builder().url(gatewayUrl).build();
 
-    client.newWebSocket(request, new WebSocketListener() {});
+    client.newWebSocket(
+        request,
+        new WebSocketListener() {
+          @Override
+          public void onMessage(WebSocket ws, String text) {
+            listeners.forEach(l -> l.accept(text));
+          }
+        });
+  }
+
+  public void onGatewayPayload(Consumer<String> consumer) {
+    listeners.add(consumer);
   }
 
   public void await() {

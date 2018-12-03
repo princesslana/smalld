@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import com.eclipsesource.json.Json;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -115,13 +116,29 @@ public class TestSmallD {
 
     subject.connect();
 
-    assertTimeoutPreemptively(Duration.ofSeconds(1), () -> gate.await());
+    assertInOneSecond(gate::await);
+  }
 
-    try {
-      gate.await(1, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      Assertions.fail("Web Socket was not opened");
-    }
+  @Test
+  public void onGatewayPayload_shouldForwardPayload() {
+    String expected = "TEST MESSAGE";
+
+    CompletableFuture<String> received = new CompletableFuture<>();
+
+    enqueueGatewayBotResponse();
+    server.enqueue(
+        new MockResponse()
+            .withWebSocketUpgrade(
+                new WebSocketListener() {
+                  public void onOpen(WebSocket webSocket, Response response) {
+                    webSocket.send(expected);
+                  }
+                }));
+
+    subject.onGatewayPayload(received::complete);
+    subject.connect();
+
+    assertInOneSecond(() -> Assertions.assertThat(received.get()).isEqualTo(expected));
   }
 
   @Test
@@ -134,6 +151,11 @@ public class TestSmallD {
   @Test
   public void await_shouldNotCompleteIfNotClosed() {
     assertFails(() -> assertInOneSecond(subject::await));
+  }
+
+  @Test
+  public void close_whenNotConnected_shouldNotThrowAnyException() {
+    Assertions.assertThatCode(subject::close).doesNotThrowAnyException();
   }
 
   private void enqueueGatewayBotResponse() {

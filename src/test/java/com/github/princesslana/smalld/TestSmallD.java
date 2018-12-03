@@ -6,12 +6,8 @@ import com.eclipsesource.json.Json;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -102,38 +98,23 @@ public class TestSmallD {
 
   @Test
   public void connect_shouldOpenWebSocketToGatewayBotUrl() {
-    CountDownLatch gate = new CountDownLatch(1);
-
     enqueueGatewayBotResponse();
-    server.enqueue(
-        new MockResponse()
-            .withWebSocketUpgrade(
-                new WebSocketListener() {
-                  public void onOpen(WebSocket webSocket, Response response) {
-                    gate.countDown();
-                  }
-                }));
+    WebSocketRecorder wsr = enqueueWebSocketResponse();
 
     subject.connect();
 
-    assertInOneSecond(gate::await);
+    assertInOneSecond(() -> wsr.assertOpened());
   }
 
   @Test
   public void onGatewayPayload_shouldForwardPayload() {
     String expected = "TEST MESSAGE";
-
     CompletableFuture<String> received = new CompletableFuture<>();
 
     enqueueGatewayBotResponse();
-    server.enqueue(
-        new MockResponse()
-            .withWebSocketUpgrade(
-                new WebSocketListener() {
-                  public void onOpen(WebSocket webSocket, Response response) {
-                    webSocket.send(expected);
-                  }
-                }));
+    WebSocketRecorder wsr = enqueueWebSocketResponse();
+
+    wsr.onOpen((ws, r) -> ws.send(expected));
 
     subject.onGatewayPayload(received::complete);
     subject.connect();
@@ -156,6 +137,19 @@ public class TestSmallD {
   @Test
   public void close_whenNotConnected_shouldNotThrowAnyException() {
     Assertions.assertThatCode(subject::close).doesNotThrowAnyException();
+  }
+
+  @Test
+  public void close_whenConnected_shouldCloseWebSocket() {
+
+    // queue in websocket recorder
+
+  }
+
+  private WebSocketRecorder enqueueWebSocketResponse() {
+    WebSocketRecorder recorder = new WebSocketRecorder();
+    server.enqueue(new MockResponse().withWebSocketUpgrade(recorder));
+    return recorder;
   }
 
   private void enqueueGatewayBotResponse() {

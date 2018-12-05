@@ -2,15 +2,12 @@ package com.github.princesslana.smalld;
 
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
-import com.eclipsesource.json.Json;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
 import org.assertj.core.api.Assertions;
@@ -27,18 +24,14 @@ public class TestSmallD {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestSmallD.class);
 
-  private static final String TOKEN = "DUMMY_TOKEN";
-
   private SmallD subject;
 
-  private MockWebServer server;
+  private MockDiscordServer server;
 
   @BeforeEach
   public void subject() {
-    server = new MockWebServer();
-
-    subject = new SmallD(TOKEN);
-    subject.setBaseUrl(server.url("/api/v6").toString());
+    server = new MockDiscordServer();
+    subject = server.newSmallD();
   }
 
   @AfterEach
@@ -47,21 +40,17 @@ public class TestSmallD {
   }
 
   @AfterEach
-  public void shutdownServer() {
-    try {
-      server.shutdown();
-    } catch (IOException e) {
-      LOG.warn("Failed to shutdown MockWebServer", e);
-    }
+  public void closeServer() {
+    server.close();
   }
 
   @Test
   public void connect_shouldSendGetGatewayBotRequest() {
-    enqueueGatewayBotResponse();
+    server.enqueueGatewayBotResponse();
 
     subject.connect();
 
-    RecordedRequest req = takeRequest(1);
+    RecordedRequest req = server.takeRequest(1);
 
     SoftAssertions.assertSoftly(
         s -> {
@@ -72,13 +61,14 @@ public class TestSmallD {
 
   @Test
   public void connect_shouldIncudeTokenOnGetGatewayBotRequest() {
-    enqueueGatewayBotResponse();
+    server.enqueueGatewayBotResponse();
 
     subject.connect();
 
-    RecordedRequest req = takeRequest(1);
+    RecordedRequest req = server.takeRequest(1);
 
-    Assertions.assertThat(req.getHeader("Authorization")).isEqualTo("Bot DUMMY_TOKEN");
+    Assertions.assertThat(req.getHeader("Authorization"))
+        .isEqualTo("Bot " + MockDiscordServer.TOKEN);
   }
 
   @Test
@@ -107,12 +97,11 @@ public class TestSmallD {
 
   @Test
   public void connect_shouldOpenWebSocketToGatewayBotUrl() {
-    enqueueGatewayBotResponse();
-    WebSocketRecorder wsr = enqueueWebSocketResponse();
+    server.enqueueConnect();
 
     subject.connect();
 
-    assertInOneSecond(() -> wsr.assertOpened());
+    assertInOneSecond(() -> server.gateway().assertOpened());
   }
 
   @Test
@@ -120,10 +109,9 @@ public class TestSmallD {
     String expected = "TEST MESSAGE";
     CompletableFuture<String> received = new CompletableFuture<>();
 
-    enqueueGatewayBotResponse();
-    WebSocketRecorder wsr = enqueueWebSocketResponse();
+    server.enqueueConnect();
 
-    wsr.onOpen((ws, r) -> ws.send(expected));
+    server.gateway().onOpen((ws, r) -> ws.send(expected));
 
     subject.onGatewayPayload(received::complete);
     subject.connect();
@@ -135,8 +123,7 @@ public class TestSmallD {
   public void sendGatewayPayload_shouldSendPayload() {
     String expected = "TEST MESSAGE";
 
-    enqueueGatewayBotResponse();
-    WebSocketRecorder wsr = enqueueWebSocketResponse();
+    server.enqueueConnect();
 
     subject.connect();
 
@@ -144,8 +131,8 @@ public class TestSmallD {
 
     assertInOneSecond(
         () -> {
-          wsr.assertOpened();
-          wsr.assertMessage(expected);
+          server.assertConnected();
+          server.gateway().assertMessage(expected);
         });
   }
 
@@ -170,49 +157,18 @@ public class TestSmallD {
   public void close_whenConnected_shouldCloseWebSocket() {
     CountDownLatch openGate = new CountDownLatch(1);
 
-    enqueueGatewayBotResponse();
-    WebSocketRecorder wsr = enqueueWebSocketResponse();
+    server.enqueueConnect();
 
-    wsr.onOpen((ws, r) -> ws.send("DUMMY"));
+    server.gateway().onOpen((ws, r) -> ws.send("DUMMY"));
     subject.onGatewayPayload(m -> subject.close());
 
     subject.connect();
 
     assertInOneSecond(
         () -> {
-          subject.await();
-          wsr.assertOpened();
-          wsr.assertClosing(1000, "Closed.");
+          server.assertConnected();
+          server.gateway().assertClosing(1000, "Closed.");
         });
-  }
-
-  private WebSocketRecorder enqueueWebSocketResponse() {
-    WebSocketRecorder recorder = new WebSocketRecorder();
-    server.enqueue(new MockResponse().withWebSocketUpgrade(recorder));
-    return recorder;
-  }
-
-  private void enqueueGatewayBotResponse() {
-    String wsUrl = "ws://" + server.getHostName() + ":" + server.getPort() + "/";
-    String getGatewayBotResponse = Json.object().add("url", wsUrl).toString();
-
-    server.enqueue(new MockResponse().setBody(getGatewayBotResponse));
-  }
-
-  private RecordedRequest takeRequest(int n) {
-    Assertions.assertThat(server.getRequestCount()).isGreaterThanOrEqualTo(n);
-
-    try {
-      RecordedRequest r = null;
-
-      for (int i = 0; i < n; i++) {
-        r = server.takeRequest();
-      }
-
-      return r;
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private void assertFails(ThrowableAssert.ThrowingCallable t) {

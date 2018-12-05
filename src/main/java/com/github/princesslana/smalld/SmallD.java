@@ -57,6 +57,10 @@ public class SmallD implements AutoCloseable {
     listeners.add(consumer);
   }
 
+  public void sendGatewayPayload(String text) {
+    gatewayWebSocket.send(text);
+  }
+
   public void await() {
     try {
       closeGate.await();

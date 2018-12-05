@@ -132,6 +132,24 @@ public class TestSmallD {
   }
 
   @Test
+  public void sendGatewayPayload_shouldSendPayload() {
+    String expected = "TEST MESSAGE";
+
+    enqueueGatewayBotResponse();
+    WebSocketRecorder wsr = enqueueWebSocketResponse();
+
+    subject.connect();
+
+    subject.sendGatewayPayload(expected);
+
+    assertInOneSecond(
+        () -> {
+          wsr.assertOpened();
+          wsr.assertMessage(expected);
+        });
+  }
+
+  @Test
   public void await_shouldCompleteIfClosed() {
     Executors.newSingleThreadScheduledExecutor()
         .schedule(subject::close, 200, TimeUnit.MILLISECONDS);

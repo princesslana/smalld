@@ -1,9 +1,12 @@
 package com.github.princesslana.smalld;
 
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
@@ -44,11 +47,17 @@ public class WebSocketRecorder extends WebSocketListener {
     assertThatNext().isEqualTo(new Message(message));
   }
 
+  public ObjectAssert<Object> assertMessage(Function<JsonObject, ?> f) throws InterruptedException {
+    Object next = received.take();
+    Assertions.assertThat(next).isInstanceOf(Message.class);
+    return Assertions.assertThat(f.apply(((Message) next).asJson()));
+  }
+
   public void assertClosing(int status, String reason) throws InterruptedException {
     assertThatNext().isEqualTo(new Closing(status, reason));
   }
 
-  private ObjectAssert<Object> assertThatNext() throws InterruptedException {
+  public ObjectAssert<Object> assertThatNext() throws InterruptedException {
     return Assertions.assertThat(received.take());
   }
 
@@ -75,6 +84,10 @@ public class WebSocketRecorder extends WebSocketListener {
 
     public Message(String message) {
       this.message = message;
+    }
+
+    public JsonObject asJson() {
+      return Json.parse(message).asObject();
     }
 
     @Override

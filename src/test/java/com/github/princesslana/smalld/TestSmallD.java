@@ -1,8 +1,5 @@
 package com.github.princesslana.smalld;
 
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
-
-import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -12,11 +9,9 @@ import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
-import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,7 +96,7 @@ public class TestSmallD {
 
     subject.connect();
 
-    assertInOneSecond(() -> server.gateway().assertOpened());
+    Assert.thatWithinOneSecond(() -> server.gateway().assertOpened());
   }
 
   @Test
@@ -116,7 +111,7 @@ public class TestSmallD {
     subject.onGatewayPayload(received::complete);
     subject.connect();
 
-    assertInOneSecond(() -> Assertions.assertThat(received.get()).isEqualTo(expected));
+    Assert.thatWithinOneSecond(() -> Assertions.assertThat(received.get()).isEqualTo(expected));
   }
 
   @Test
@@ -129,7 +124,7 @@ public class TestSmallD {
 
     subject.sendGatewayPayload(expected);
 
-    assertInOneSecond(
+    Assert.thatWithinOneSecond(
         () -> {
           server.assertConnected();
           server.gateway().assertMessage(expected);
@@ -140,12 +135,12 @@ public class TestSmallD {
   public void await_shouldCompleteIfClosed() {
     Executors.newSingleThreadScheduledExecutor()
         .schedule(subject::close, 200, TimeUnit.MILLISECONDS);
-    assertInOneSecond(subject::await);
+    Assert.thatWithinOneSecond(subject::await);
   }
 
   @Test
   public void await_shouldNotCompleteIfNotClosed() {
-    assertFails(() -> assertInOneSecond(subject::await));
+    Assert.thatNotWithinOneSecond(subject::await);
   }
 
   @Test
@@ -164,18 +159,10 @@ public class TestSmallD {
 
     subject.connect();
 
-    assertInOneSecond(
+    Assert.thatWithinOneSecond(
         () -> {
           server.assertConnected();
           server.gateway().assertClosing(1000, "Closed.");
         });
-  }
-
-  private void assertFails(ThrowableAssert.ThrowingCallable t) {
-    Assertions.assertThatExceptionOfType(AssertionError.class).isThrownBy(t);
-  }
-
-  private void assertInOneSecond(Executable exec) {
-    assertTimeoutPreemptively(Duration.ofSeconds(1), exec);
   }
 }

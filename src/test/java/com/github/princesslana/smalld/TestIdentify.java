@@ -46,9 +46,17 @@ public class TestIdentify {
     connect();
 
     Assert.thatWithinOneSecond(
-        () -> {
-          server.gateway().assertMessage(j -> j.getInt("op", -1)).isEqualTo(2);
-        });
+        () ->
+            server
+                .gateway()
+                .assertJsonMessage()
+                .and(
+                    j -> j.node("op").isEqualTo(2),
+                    j -> j.node("d.token").isEqualTo(MockDiscordServer.TOKEN),
+                    j -> j.node("d.compress").isBoolean().isFalse(),
+                    j -> j.node("d.properties.$os").isNotNull(),
+                    j -> j.node("d.properties.$device").isEqualTo("SmallD"),
+                    j -> j.node("d.properties.$browser").isEqualTo("SmallD")));
   }
 
   @Test

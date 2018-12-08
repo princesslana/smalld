@@ -15,7 +15,19 @@ public class Identify {
           JsonObject p = Json.parse(s).asObject();
 
           if (p.getInt("op", -1) == 10) {
-            smalld.sendGatewayPayload(Json.object().add("op", 2).toString());
+            JsonObject properties =
+                Json.object()
+                    .add("$os", System.getProperty("os.name"))
+                    .add("$device", "SmallD")
+                    .add("$browser", "SmallD");
+
+            JsonObject d =
+                Json.object()
+                    .add("token", smalld.getToken())
+                    .add("properties", properties)
+                    .add("compress", false);
+            JsonObject identify = Json.object().add("op", 2).add("d", d);
+            smalld.sendGatewayPayload(identify.toString());
           }
         });
   }

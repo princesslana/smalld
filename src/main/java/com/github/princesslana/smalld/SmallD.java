@@ -33,6 +33,10 @@ public class SmallD implements AutoCloseable {
     this.token = token;
   }
 
+  public String getToken() {
+    return token;
+  }
+
   public void setBaseUrl(String baseUrl) {
     this.baseUrl = baseUrl;
   }

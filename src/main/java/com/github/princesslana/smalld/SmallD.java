@@ -7,8 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import okhttp3.Interceptor;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
@@ -21,7 +25,10 @@ public class SmallD implements AutoCloseable {
 
   private String baseUrl = V6_BASE_URL;
 
-  private final OkHttpClient client = new OkHttpClient();
+  private final OkHttpClient client =
+      new OkHttpClient.Builder()
+          .addInterceptor(addHeader("Authorization", () -> "Bot " + getToken()))
+          .build();
 
   private final List<Consumer<String>> listeners = new ArrayList<>();
 
@@ -65,6 +72,20 @@ public class SmallD implements AutoCloseable {
     gatewayWebSocket.send(text);
   }
 
+  public String get(String path) {
+    return sendRequest(new Request.Builder().url(baseUrl + path).build());
+  }
+
+  public String post(String path, String payload) {
+    Request request =
+        new Request.Builder()
+            .url(baseUrl + path)
+            .post(RequestBody.create(MediaType.get("application/json"), payload))
+            .build();
+
+    return sendRequest(request);
+  }
+
   public void await() {
     try {
       closeGate.await();
@@ -88,25 +109,27 @@ public class SmallD implements AutoCloseable {
 
   private String getGatewayUrl() {
     try {
-      Request request =
-          new Request.Builder()
-              .url(baseUrl + "/gateway/bot")
-              .header("Authorization", "Bot " + token)
-              .build();
-
-      Response response = client.newCall(request).execute();
-
-      String url = Json.parse(response.body().charStream()).asObject().getString("url", null);
+      String url = Json.parse(get("/gateway/bot")).asObject().getString("url", null);
 
       if (url == null) {
         throw new SmallDException("No URL in /gateway/bot request");
       }
 
       return url;
-    } catch (IOException e) {
-      throw new SmallDException(e);
     } catch (ParseException e) {
       throw new SmallDException(e);
     }
+  }
+
+  private String sendRequest(Request request) {
+    try (Response response = client.newCall(request).execute()) {
+      return response.body().string();
+    } catch (IOException e) {
+      throw new SmallDException(e);
+    }
+  }
+
+  private static final Interceptor addHeader(String name, Supplier<String> valueSupplier) {
+    return c -> c.proceed(c.request().newBuilder().header(name, valueSupplier.get()).build());
   }
 }

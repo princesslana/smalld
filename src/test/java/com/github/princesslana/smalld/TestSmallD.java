@@ -45,7 +45,7 @@ public class TestSmallD {
 
     subject.connect();
 
-    RecordedRequest req = server.takeRequest(1);
+    RecordedRequest req = server.takeRequest();
 
     SoftAssertions.assertSoftly(
         s -> {
@@ -60,7 +60,7 @@ public class TestSmallD {
 
     subject.connect();
 
-    RecordedRequest req = server.takeRequest(1);
+    RecordedRequest req = server.takeRequest();
 
     Assertions.assertThat(req.getHeader("Authorization"))
         .isEqualTo("Bot " + MockDiscordServer.TOKEN);
@@ -118,17 +118,58 @@ public class TestSmallD {
   public void sendGatewayPayload_shouldSendPayload() {
     String expected = "TEST MESSAGE";
 
-    server.enqueueConnect();
-
-    subject.connect();
+    server.connect(subject);
 
     subject.sendGatewayPayload(expected);
 
-    Assert.thatWithinOneSecond(
-        () -> {
-          server.assertConnected();
-          server.gateway().assertMessage(expected);
+    Assert.thatWithinOneSecond(() -> server.gateway().assertMessage(expected));
+  }
+
+  @Test
+  public void post_shouldPostPayloadToEndpoint() {
+    String payload = "TEST MESSAGE";
+
+    server.connect(subject);
+
+    server.enqueue("");
+
+    subject.post("/test/url", payload);
+
+    RecordedRequest req = server.takeRequest();
+
+    SoftAssertions.assertSoftly(
+        s -> {
+          s.assertThat(req.getMethod()).isEqualTo("POST");
+          s.assertThat(req.getPath()).isEqualTo("/api/v6/test/url");
+          s.assertThat(req.getBody().readUtf8()).isEqualTo(payload);
         });
+  }
+
+  @Test
+  public void post_shouldReturnResponseOn200() {
+    String expected = "TEST RESPONSE";
+
+    server.connect(subject);
+
+    server.enqueue(expected);
+
+    String actual = subject.post("/test/url", "");
+
+    Assertions.assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test
+  public void post_shouldIncludeToken() {
+    server.connect(subject);
+
+    server.enqueue("");
+
+    subject.post("/test/url", "");
+
+    RecordedRequest req = server.takeRequest();
+
+    Assertions.assertThat(req.getHeader("Authorization"))
+        .isEqualTo("Bot " + MockDiscordServer.TOKEN);
   }
 
   @Test

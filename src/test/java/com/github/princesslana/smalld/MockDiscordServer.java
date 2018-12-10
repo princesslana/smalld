@@ -19,6 +19,8 @@ public class MockDiscordServer implements AutoCloseable {
 
   private final WebSocketRecorder gateway = new WebSocketRecorder();
 
+  private int requestsTaken = 0;
+
   public SmallD newSmallD() {
     SmallD smalld = new SmallD(TOKEN);
     smalld.setBaseUrl(web.url("/api/v6").toString());
@@ -41,6 +43,16 @@ public class MockDiscordServer implements AutoCloseable {
     web.enqueue(response);
   }
 
+  public void connect(SmallD smalld) {
+    enqueueConnect();
+    smalld.connect();
+    Assert.thatWithinOneSecond(this::assertConnected);
+
+    // Take the gateway bot and web socket requests
+    takeRequest();
+    takeRequest();
+  }
+
   public void assertConnected() throws InterruptedException {
     gateway.assertOpened();
   }
@@ -54,24 +66,24 @@ public class MockDiscordServer implements AutoCloseable {
     String wsUrl = "ws://" + web.getHostName() + ":" + web.getPort() + "/";
     String getGatewayBotResponse = Json.object().add("url", wsUrl).toString();
 
-    web.enqueue(new MockResponse().setBody(getGatewayBotResponse));
+    enqueue(getGatewayBotResponse);
+  }
+
+  public void enqueue(String body) {
+    web.enqueue(new MockResponse().setBody(body));
   }
 
   public void enqueueWebSocketResponse() {
     web.enqueue(new MockResponse().withWebSocketUpgrade(gateway));
   }
 
-  public RecordedRequest takeRequest(int n) {
-    Assertions.assertThat(web.getRequestCount()).isGreaterThanOrEqualTo(n);
+  public RecordedRequest takeRequest() {
+    requestsTaken++;
+
+    Assertions.assertThat(web.getRequestCount()).isGreaterThanOrEqualTo(requestsTaken);
 
     try {
-      RecordedRequest r = null;
-
-      for (int i = 0; i < n; i++) {
-        r = web.takeRequest();
-      }
-
-      return r;
+      return web.takeRequest();
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }

@@ -33,17 +33,11 @@ public class TestIdentify {
     server.close();
   }
 
-  private void connect() {
-    server.enqueueConnect();
-    smalld.connect();
-    Assert.thatWithinOneSecond(server::assertConnected);
-  }
-
   @Test
   public void subject_whenHelloReceived_shouldSendIdentify() {
     server.gateway().onOpen((ws, r) -> ws.send(Json.object().add("op", 10).toString()));
 
-    connect();
+    server.connect(smalld);
 
     Assert.thatWithinOneSecond(
         () ->
@@ -63,7 +57,7 @@ public class TestIdentify {
   public void subject_whenHeartbeatReceived_shouldSendNothing() {
     server.gateway().onOpen((ws, r) -> ws.send(Json.object().add("op", 1).toString()));
 
-    connect();
+    server.connect(smalld);
 
     Assert.thatNotWithinOneSecond(() -> server.gateway().assertThatNext().isNotNull());
   }

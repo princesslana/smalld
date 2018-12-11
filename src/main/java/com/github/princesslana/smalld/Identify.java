@@ -5,11 +5,7 @@ import com.eclipsesource.json.JsonObject;
 
 public class Identify {
 
-  private final SmallD smalld;
-
   public Identify(SmallD smalld) {
-    this.smalld = smalld;
-
     smalld.onGatewayPayload(
         s -> {
           JsonObject p = Json.parse(s).asObject();

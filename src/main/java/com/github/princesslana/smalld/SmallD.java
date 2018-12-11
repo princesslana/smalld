@@ -102,9 +102,8 @@ public class SmallD implements AutoCloseable {
   }
 
   public void run() {
-    // try (Connection c = connect()) {
-    //  c.await();
-    // }
+    connect();
+    await();
   }
 
   private String getGatewayUrl() {

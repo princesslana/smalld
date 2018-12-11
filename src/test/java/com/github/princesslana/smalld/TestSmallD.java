@@ -40,6 +40,13 @@ public class TestSmallD {
   }
 
   @Test
+  public void baseUrl_whenNotSetExplicitly_shouldBeDiscordUrl() {
+    SmallD defaultSmallD = new SmallD(MockDiscordServer.TOKEN);
+    Assertions.assertThat(defaultSmallD)
+        .hasFieldOrPropertyWithValue("baseUrl", "https://discordapp.com/api/v6");
+  }
+
+  @Test
   public void connect_shouldSendGetGatewayBotRequest() {
     server.enqueueGatewayBotResponse();
 
@@ -173,14 +180,14 @@ public class TestSmallD {
   }
 
   @Test
-  public void await_shouldCompleteIfClosed() {
+  public void await_whenClose_shouldComplete() {
     Executors.newSingleThreadScheduledExecutor()
         .schedule(subject::close, 200, TimeUnit.MILLISECONDS);
     Assert.thatWithinOneSecond(subject::await);
   }
 
   @Test
-  public void await_shouldNotCompleteIfNotClosed() {
+  public void await_whenNoClose_shouldNotComplete() {
     Assert.thatNotWithinOneSecond(subject::await);
   }
 
@@ -205,5 +212,34 @@ public class TestSmallD {
           server.assertConnected();
           server.gateway().assertClosing(1000, "Closed.");
         });
+  }
+
+  @Test
+  public void run_shouldConnect() {
+    server.enqueueConnect();
+
+    server.gateway().onOpen((ws, r) -> ws.send("DUMMY"));
+    subject.onGatewayPayload(m -> subject.close());
+
+    subject.run();
+
+    Assert.thatWithinOneSecond(server::assertConnected);
+  }
+
+  @Test
+  public void run_whenClose_shouldComplete() {
+    server.enqueueConnect();
+
+    server.gateway().onOpen((ws, r) -> ws.send("DUMMY"));
+    subject.onGatewayPayload(m -> subject.close());
+
+    Assert.thatWithinOneSecond(subject::run);
+  }
+
+  @Test
+  public void run_whenNoClose_shouldNotComplete() {
+    server.enqueueConnect();
+
+    Assert.thatNotWithinOneSecond(subject::run);
   }
 }

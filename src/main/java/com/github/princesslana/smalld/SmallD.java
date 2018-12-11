@@ -131,4 +131,12 @@ public class SmallD implements AutoCloseable {
   private static final Interceptor addHeader(String name, Supplier<String> valueSupplier) {
     return c -> c.proceed(c.request().newBuilder().header(name, valueSupplier.get()).build());
   }
+
+  public static SmallD create(String token) {
+    SmallD smalld = new SmallD(token);
+
+    new Identify(smalld);
+
+    return smalld;
+  }
 }

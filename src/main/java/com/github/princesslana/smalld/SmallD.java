@@ -90,7 +90,7 @@ public class SmallD implements AutoCloseable {
     try {
       closeGate.await();
     } catch (InterruptedException e) {
-      // ignore
+      Thread.currentThread().interrupt();
     }
   }
 

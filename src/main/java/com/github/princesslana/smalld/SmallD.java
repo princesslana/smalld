@@ -5,6 +5,7 @@ import com.eclipsesource.json.ParseException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -29,9 +30,12 @@ public class SmallD implements AutoCloseable {
 
   private String baseUrl = V6_BASE_URL;
 
+  private final String userAgent;
+
   private final OkHttpClient client =
       new OkHttpClient.Builder()
           .addInterceptor(addHeader("Authorization", () -> "Bot " + getToken()))
+          .addInterceptor(addHeader("User-Agent", () -> getUserAgent()))
           .build();
 
   private final List<Consumer<String>> listeners = new ArrayList<>();
@@ -42,6 +46,16 @@ public class SmallD implements AutoCloseable {
 
   public SmallD(String token) {
     this.token = token;
+
+    try {
+      Properties version = new Properties();
+      version.load(getClass().getResourceAsStream("version.properties"));
+      userAgent =
+          String.format(
+              "DiscordBot (%s, %s)", version.getProperty("url"), version.getProperty("version"));
+    } catch (IOException e) {
+      throw new SmallDException(e);
+    }
   }
 
   public String getToken() {
@@ -50,6 +64,10 @@ public class SmallD implements AutoCloseable {
 
   public void setBaseUrl(String baseUrl) {
     this.baseUrl = baseUrl;
+  }
+
+  private String getUserAgent() {
+    return userAgent;
   }
 
   public void connect() {

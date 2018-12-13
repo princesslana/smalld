@@ -133,6 +133,19 @@ public class TestSmallD {
   }
 
   @Test
+  public void get_shouldIncludeUserAgent() {
+    server.connect(subject);
+
+    server.enqueue("");
+
+    subject.get("/test/url");
+
+    RecordedRequest req = server.takeRequest();
+
+    Assertions.assertThat(req.getHeader("User-Agent")).matches("DiscordBot (\\S+, \\S+)");
+  }
+
+  @Test
   public void post_shouldPostPayloadToEndpoint() {
     String payload = "TEST MESSAGE";
 

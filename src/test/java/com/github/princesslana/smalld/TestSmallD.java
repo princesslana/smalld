@@ -192,6 +192,16 @@ public class TestSmallD {
   }
 
   @Test
+  public void await_whenInterrupted_shouldReinterrupt() {
+    Assert.thatWithinOneSecond(
+        () -> {
+          Thread.currentThread().interrupt();
+          subject.await();
+          Assertions.assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        });
+  }
+
+  @Test
   public void close_whenNotConnected_shouldNotThrowAnyException() {
     Assertions.assertThatCode(subject::close).doesNotThrowAnyException();
   }

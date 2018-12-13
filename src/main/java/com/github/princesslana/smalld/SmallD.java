@@ -16,8 +16,12 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SmallD implements AutoCloseable {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SmallD.class);
 
   private static final String V6_BASE_URL = "https://discordapp.com/api/v6";
 
@@ -59,6 +63,7 @@ public class SmallD implements AutoCloseable {
             new WebSocketListener() {
               @Override
               public void onMessage(WebSocket ws, String text) {
+                LOG.debug("Gateway Receive: {}", text);
                 listeners.forEach(l -> l.accept(text));
               }
             });
@@ -69,14 +74,18 @@ public class SmallD implements AutoCloseable {
   }
 
   public void sendGatewayPayload(String text) {
+    LOG.debug("Gateway Send: {}", text);
     gatewayWebSocket.send(text);
   }
 
   public String get(String path) {
+    LOG.debug("HTTP GET {}", path);
     return sendRequest(new Request.Builder().url(baseUrl + path).build());
   }
 
   public String post(String path, String payload) {
+    LOG.debug("HTTP POST {}: {}", path, payload);
+
     Request request =
         new Request.Builder()
             .url(baseUrl + path)
@@ -122,7 +131,11 @@ public class SmallD implements AutoCloseable {
 
   private String sendRequest(Request request) {
     try (Response response = client.newCall(request).execute()) {
-      return response.body().string();
+      String body = response.body().string();
+
+      LOG.debug("HTTP Response {}: {}", response.code(), body);
+
+      return body;
     } catch (IOException e) {
       throw new SmallDException(e);
     }

@@ -16,3 +16,37 @@ Features considered out of scope:
 * Serialization or deserialization os JSON messages/payloads
 * Caching
 
+## Usage
+**Latest Release:** 
+![Maven Central](https://img.shields.io/maven-central/v/com.github.princesslana/smalld.svg)
+[![Javadocs](http://javadoc.io/badge/com.github.princesslana/smalld.svg)](http://javadoc.io/doc/com.github.princesslana/smalld)
+
+Add as a dependency to maven, using the latest release version:
+```xml
+  <dependency>
+    <groupId>com.github.princesslana</groupId>
+    <artifactId>smalld</artifactId>
+    <version>LASTEST_VERSION</version>
+  </dependency>
+```
+
+### Development Version
+
+Use [jitpack](https://jitpack.io/#princesslana/smalld).
+
+Add the repository:
+```xml
+  <repository>
+    <id>jitpack.io</id>
+    <url>https://jitpack.io</url>
+  </repository>
+```
+
+Add the dependency:
+```xml
+  <dependency>
+    <groupId>com.github.princesslana</groupId>
+    <artifactId>smalld</artifactId>
+    <version>master-SNAPSHOT</version>
+  </dependency>
+```

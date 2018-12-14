@@ -140,9 +140,36 @@ public class TestSmallD {
 
     subject.get("/test/url");
 
-    RecordedRequest req = server.takeRequest();
+    Assertions.assertThat(server.takeRequest().getHeader("User-Agent"))
+        .matches("DiscordBot (\\S+, \\S+)")
+        .doesNotContain("null");
+  }
 
-    Assertions.assertThat(req.getHeader("User-Agent")).matches("DiscordBot (\\S+, \\S+)");
+  @Test
+  public void get_whenHttp400_shouldThrowClientException() {
+    server.connect(subject);
+    server.enqueue(new MockResponse().setResponseCode(400));
+
+    Assertions.assertThatExceptionOfType(ClientException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
+  }
+
+  @Test
+  public void get_whenHttp429_shouldThrowRateLimitException() {
+    server.connect(subject);
+    server.enqueue(new MockResponse().setResponseCode(429));
+
+    Assertions.assertThatExceptionOfType(RateLimitException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
+  }
+
+  @Test
+  public void get_whenHttp500_shouldThrowServerException() {
+    server.connect(subject);
+    server.enqueue(new MockResponse().setResponseCode(500));
+
+    Assertions.assertThatExceptionOfType(ServerException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
   }
 
   @Test

@@ -140,9 +140,72 @@ public class TestSmallD {
 
     subject.get("/test/url");
 
-    RecordedRequest req = server.takeRequest();
+    Assertions.assertThat(server.takeRequest().getHeader("User-Agent"))
+        .matches("DiscordBot (\\S+, \\S+)")
+        .doesNotContain("null");
+  }
 
-    Assertions.assertThat(req.getHeader("User-Agent")).matches("DiscordBot (\\S+, \\S+)");
+  @Test
+  public void get_whenHttp300_shouldThrowHttpException() {
+    server.connect(subject);
+    server.enqueue(new MockResponse().setResponseCode(300));
+
+    Assertions.assertThatExceptionOfType(HttpException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
+  }
+
+  @Test
+  public void get_whenHttp400_shouldThrowClientException() {
+    server.connect(subject);
+    server.enqueue(new MockResponse().setResponseCode(400));
+
+    Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
+  }
+
+  @Test
+  public void get_whenHttp429_shouldThrowRateLimitException() {
+    server.connect(subject);
+    server.enqueue(new MockResponse().setResponseCode(429));
+
+    Assertions.assertThatExceptionOfType(HttpException.RateLimitException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
+  }
+
+  @Test
+  public void get_whenHttp500_shouldThrowServerException() {
+    server.connect(subject);
+    server.enqueue(new MockResponse().setResponseCode(500));
+
+    Assertions.assertThatExceptionOfType(HttpException.ServerException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
+  }
+
+  @Test
+  public void get_whenHttp500_shouldIncludeCode() {
+    server.connect(subject);
+    server.enqueue(new MockResponse().setResponseCode(500));
+
+    Assertions.assertThatThrownBy(() -> subject.get("test/url"))
+        .hasFieldOrPropertyWithValue("code", 500);
+  }
+
+  @Test
+  public void get_whenHttp500_shouldIncludeStatus() {
+    server.connect(subject);
+    server.enqueue(new MockResponse().setResponseCode(500));
+
+    Assertions.assertThatThrownBy(() -> subject.get("test/url"))
+        .hasFieldOrPropertyWithValue("message", "Server Error");
+  }
+
+  @Test
+  public void get_whenHttp500_shouldIncludeBody() {
+    server.connect(subject);
+    server.enqueue(new MockResponse().setResponseCode(500).setBody("TEST BODY"));
+
+    Assertions.assertThatThrownBy(() -> subject.get("test/url"))
+        .hasFieldOrPropertyWithValue("body", "TEST BODY");
   }
 
   @Test

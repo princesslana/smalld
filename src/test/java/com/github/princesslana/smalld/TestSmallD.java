@@ -196,7 +196,7 @@ public class TestSmallD {
     server.enqueue(new MockResponse().setResponseCode(500));
 
     Assertions.assertThatThrownBy(() -> subject.get("test/url"))
-        .hasFieldOrPropertyWithValue("message", "Server Error");
+        .hasFieldOrPropertyWithValue("status", "Server Error");
   }
 
   @Test

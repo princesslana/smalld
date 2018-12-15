@@ -1,5 +1,8 @@
 package com.github.princesslana.smalld;
 
+import static org.quicktheories.QuickTheory.qt;
+import static org.quicktheories.generators.Generate.range;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -128,8 +131,24 @@ public class TestSmallD {
     server.connect(subject);
 
     subject.sendGatewayPayload(expected);
-
     Assert.thatWithinOneSecond(() -> server.gateway().assertMessage(expected));
+  }
+
+  @Test
+  public void get_shouldMakeGetRequest() {
+    server.connect(subject);
+
+    server.enqueue("");
+
+    subject.get("/test/url");
+
+    RecordedRequest req = server.takeRequest();
+
+    SoftAssertions.assertSoftly(
+        s -> {
+          s.assertThat(req.getMethod()).isEqualTo("GET");
+          s.assertThat(req.getPath()).isEqualTo("/api/v6/test/url");
+        });
   }
 
   @Test
@@ -146,21 +165,34 @@ public class TestSmallD {
   }
 
   @Test
-  public void get_whenHttp300_shouldThrowHttpException() {
+  public void get_whenHttp3xx_shouldThrowHttpException() {
     server.connect(subject);
-    server.enqueue(new MockResponse().setResponseCode(300));
 
-    Assertions.assertThatExceptionOfType(HttpException.class)
-        .isThrownBy(() -> subject.get("/test/url"));
+    qt().forAll(range(300, 399))
+        .checkAssert(
+            s -> {
+              server.enqueue(new MockResponse().setResponseCode(s));
+
+              Assertions.assertThatExceptionOfType(HttpException.class)
+                  .isThrownBy(() -> subject.get("/test/url"));
+            });
   }
 
   @Test
-  public void get_whenHttp400_shouldThrowClientException() {
+  public void get_whenHttp4xx_shouldThrowClientException() {
     server.connect(subject);
-    server.enqueue(new MockResponse().setResponseCode(400));
 
-    Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
-        .isThrownBy(() -> subject.get("/test/url"));
+    qt().forAll(range(400, 499))
+        // These response codes receive special handling in okhttp,
+        // so do not work with this test
+        .assuming(s -> s != 407 && s != 408)
+        .checkAssert(
+            s -> {
+              server.enqueue(new MockResponse().setResponseCode(s));
+
+              Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
+                  .isThrownBy(() -> subject.get("/test/url"));
+            });
   }
 
   @Test
@@ -173,12 +205,17 @@ public class TestSmallD {
   }
 
   @Test
-  public void get_whenHttp500_shouldThrowServerException() {
+  public void get_whenHttp5xx_shouldThrowServerException() {
     server.connect(subject);
-    server.enqueue(new MockResponse().setResponseCode(500));
 
-    Assertions.assertThatExceptionOfType(HttpException.ServerException.class)
-        .isThrownBy(() -> subject.get("/test/url"));
+    qt().forAll(range(500, 599))
+        .checkAssert(
+            s -> {
+              server.enqueue(new MockResponse().setResponseCode(s));
+
+              Assertions.assertThatExceptionOfType(HttpException.ServerException.class)
+                  .isThrownBy(() -> subject.get("/test/url"));
+            });
   }
 
   @Test

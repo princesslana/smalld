@@ -98,7 +98,7 @@ public class SmallD implements AutoCloseable {
 
   public String get(String path) {
     LOG.debug("HTTP GET {}", path);
-    return sendRequest(new Request.Builder().url(baseUrl + path).build());
+    return sendRequest(new Request.Builder().url(baseUrl + path).get().build());
   }
 
   public String post(String path, String payload) {

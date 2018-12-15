@@ -149,19 +149,20 @@ public class SmallD implements AutoCloseable {
 
   private String sendRequest(Request request) {
     try (Response response = client.newCall(request).execute()) {
+      int code = response.code();
+      String message = response.message();
       String body = response.body().string();
 
-      String responseSummary =
-          String.format("%s %s: %s", response.code(), response.message(), body);
-
-      LOG.debug("HTTP Response: {}", responseSummary);
+      LOG.debug("HTTP Response: [{} {}] {}", code, message, body);
 
       if (response.code() == 429) {
-        throw new RateLimitException(responseSummary);
+        throw new HttpException.RateLimitException(code, message, body);
       } else if (response.code() >= 500) {
-        throw new ServerException(responseSummary);
+        throw new HttpException.ServerException(code, message, body);
       } else if (response.code() >= 400) {
-        throw new ClientException(responseSummary);
+        throw new HttpException.ClientException(code, message, body);
+      } else if (!response.isSuccessful()) {
+        throw new HttpException(code, message, body);
       }
 
       return body;

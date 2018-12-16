@@ -25,6 +25,7 @@ public class SmallD implements AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(SmallD.class);
 
   private static final String V6_BASE_URL = "https://discordapp.com/api/v6";
+  private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
   private final String token;
 
@@ -35,7 +36,7 @@ public class SmallD implements AutoCloseable {
   private final OkHttpClient client =
       new OkHttpClient.Builder()
           .addInterceptor(addHeader("Authorization", () -> "Bot " + getToken()))
-          .addInterceptor(addHeader("User-Agent", () -> getUserAgent()))
+          .addInterceptor(addHeader("User-Agent", this::getUserAgent))
           .build();
 
   private final List<Consumer<String>> listeners = new ArrayList<>();
@@ -105,10 +106,7 @@ public class SmallD implements AutoCloseable {
     LOG.debug("HTTP POST {}: {}", path, payload);
 
     Request request =
-        new Request.Builder()
-            .url(baseUrl + path)
-            .post(RequestBody.create(MediaType.get("application/json"), payload))
-            .build();
+        new Request.Builder().url(baseUrl + path).post(RequestBody.create(JSON, payload)).build();
 
     return sendRequest(request);
   }

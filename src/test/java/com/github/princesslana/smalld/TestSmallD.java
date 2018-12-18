@@ -1,8 +1,5 @@
 package com.github.princesslana.smalld;
 
-import static org.quicktheories.QuickTheory.qt;
-import static org.quicktheories.generators.Generate.range;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -15,6 +12,8 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,28 +125,30 @@ public class TestSmallD {
 
   @Test
   public void sendGatewayPayload_shouldSendPayload() {
-    String expected = "TEST MESSAGE";
+    String payload = "TEST PAYLOAD";
 
     server.connect(subject);
 
-    subject.sendGatewayPayload(expected);
-    Assert.thatWithinOneSecond(() -> server.gateway().assertMessage(expected));
+    subject.sendGatewayPayload(payload);
+    Assert.thatWithinOneSecond(() -> server.gateway().assertMessage(payload));
   }
 
   @Test
   public void get_shouldMakeGetRequest() {
     server.connect(subject);
 
+    String p = "/test/path";
+
     server.enqueue("");
 
-    subject.get("/test/url");
+    subject.get(p);
 
     RecordedRequest req = server.takeRequest();
 
     SoftAssertions.assertSoftly(
         s -> {
           s.assertThat(req.getMethod()).isEqualTo("GET");
-          s.assertThat(req.getPath()).isEqualTo("/api/v6/test/url");
+          s.assertThat(req.getPath()).isEqualTo("/api/v6" + p);
         });
   }
 
@@ -164,35 +165,26 @@ public class TestSmallD {
         .doesNotContain("null");
   }
 
-  @Test
-  public void get_whenHttp3xx_shouldThrowHttpException() {
+  @ParameterizedTest
+  @ValueSource(ints = {300, 301, 302, 399})
+  public void get_whenHttp3xx_shouldThrowHttpException(int status) {
     server.connect(subject);
 
-    qt().forAll(range(300, 399))
-        .checkAssert(
-            s -> {
-              server.enqueue(new MockResponse().setResponseCode(s));
+    server.enqueue(new MockResponse().setResponseCode(status));
 
-              Assertions.assertThatExceptionOfType(HttpException.class)
-                  .isThrownBy(() -> subject.get("/test/url"));
-            });
+    Assertions.assertThatExceptionOfType(HttpException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
   }
 
-  @Test
-  public void get_whenHttp4xx_shouldThrowClientException() {
+  @ParameterizedTest
+  @ValueSource(ints = {400, 404, 422, 429, 499})
+  public void get_whenHttp4xx_shouldThrowClientException(int status) {
     server.connect(subject);
 
-    qt().forAll(range(400, 499))
-        // These response codes receive special handling in okhttp,
-        // so do not work with this test
-        .assuming(s -> s != 407 && s != 408)
-        .checkAssert(
-            s -> {
-              server.enqueue(new MockResponse().setResponseCode(s));
+    server.enqueue(new MockResponse().setResponseCode(status));
 
-              Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
-                  .isThrownBy(() -> subject.get("/test/url"));
-            });
+    Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
   }
 
   @Test
@@ -204,18 +196,15 @@ public class TestSmallD {
         .isThrownBy(() -> subject.get("/test/url"));
   }
 
-  @Test
-  public void get_whenHttp5xx_shouldThrowServerException() {
+  @ParameterizedTest
+  @ValueSource(ints = {500, 502, 503, 599})
+  public void get_whenHttp5xx_shouldThrowServerException(int status) {
     server.connect(subject);
 
-    qt().forAll(range(500, 599))
-        .checkAssert(
-            s -> {
-              server.enqueue(new MockResponse().setResponseCode(s));
+    server.enqueue(new MockResponse().setResponseCode(status));
 
-              Assertions.assertThatExceptionOfType(HttpException.ServerException.class)
-                  .isThrownBy(() -> subject.get("/test/url"));
-            });
+    Assertions.assertThatExceptionOfType(HttpException.ServerException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
   }
 
   @Test
@@ -247,7 +236,7 @@ public class TestSmallD {
 
   @Test
   public void post_shouldPostPayloadToEndpoint() {
-    String payload = "TEST MESSAGE";
+    String payload = "TEST PAYLOAD";
 
     server.connect(subject);
 

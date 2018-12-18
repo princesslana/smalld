@@ -47,7 +47,6 @@
     <lib.junit.version>5.3.1</lib.junit.version>
     <lib.minimal-json.version>0.9.5</lib.minimal-json.version>
     <lib.okhttp.version>3.12.0</lib.okhttp.version>
-    <lib.quicktheories.version>0.25</lib.quicktheories.version>
     <lib.slf4j.version>1.7.25</lib.slf4j.version>
     <plugin.checkstyle.version>3.0.0</plugin.checkstyle.version>
     <plugin.clean.version>3.1.0</plugin.clean.version>
@@ -121,6 +120,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>com.eclipsesource.minimal-json</groupId>
       <artifactId>minimal-json</artifactId>
       <version>${lib.minimal-json.version}</version>
@@ -137,12 +141,6 @@
     <dependency>
       <groupId>com.squareup.okio</groupId>
       <artifactId>okio</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.quicktheories</groupId>
-      <artifactId>quicktheories</artifactId>
-      <version>${lib.quicktheories.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

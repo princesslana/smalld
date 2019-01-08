@@ -29,6 +29,9 @@ public class SmallD implements AutoCloseable {
 
   private final String token;
 
+  private int currentShard = 0;
+  private int numberOfShards = 1;
+
   private String baseUrl = V6_BASE_URL;
 
   private final String userAgent;
@@ -61,6 +64,19 @@ public class SmallD implements AutoCloseable {
 
   public String getToken() {
     return token;
+  }
+
+  public int getCurrentShard() {
+    return currentShard;
+  }
+
+  public int getNumberOfShards() {
+    return numberOfShards;
+  }
+
+  public void setShard(int current, int number) {
+    this.currentShard = current;
+    this.numberOfShards = number;
   }
 
   public void setBaseUrl(String baseUrl) {

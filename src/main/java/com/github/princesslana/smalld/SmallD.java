@@ -42,7 +42,9 @@ public class SmallD implements AutoCloseable {
           .addInterceptor(addHeader("User-Agent", this::getUserAgent))
           .build();
 
-  private final List<Consumer<String>> listeners = new ArrayList<>();
+  private final List<Consumer<String>> gatewayPayloadListeners = new ArrayList<>();
+
+  private final List<Runnable> closeListeners = new ArrayList<>();
 
   private final CountDownLatch closeGate = new CountDownLatch(1);
 
@@ -99,13 +101,13 @@ public class SmallD implements AutoCloseable {
               @Override
               public void onMessage(WebSocket ws, String text) {
                 LOG.debug("Gateway Receive: {}", text);
-                listeners.forEach(l -> l.accept(text));
+                gatewayPayloadListeners.forEach(l -> l.accept(text));
               }
             });
   }
 
   public void onGatewayPayload(Consumer<String> consumer) {
-    listeners.add(consumer);
+    gatewayPayloadListeners.add(consumer);
   }
 
   public void sendGatewayPayload(String text) {
@@ -139,7 +141,13 @@ public class SmallD implements AutoCloseable {
     if (gatewayWebSocket != null) {
       gatewayWebSocket.close(1000, "Closed.");
     }
+
+    closeListeners.forEach(Runnable::run);
     closeGate.countDown();
+  }
+
+  public void onClose(Runnable r) {
+    closeListeners.add(r);
   }
 
   public void run() {

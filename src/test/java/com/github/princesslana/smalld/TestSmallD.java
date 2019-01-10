@@ -322,8 +322,6 @@ public class TestSmallD {
 
   @Test
   public void close_whenConnected_shouldCloseWebSocket() {
-    CountDownLatch openGate = new CountDownLatch(1);
-
     server.enqueueConnect();
 
     server.gateway().onOpen((ws, r) -> ws.send("DUMMY"));
@@ -336,6 +334,22 @@ public class TestSmallD {
           server.assertConnected();
           server.gateway().assertClosing(1000, "Closed.");
         });
+  }
+
+  @Test
+  public void close_whenConnected_shouldCallListener() {
+    CountDownLatch closeGate = new CountDownLatch(1);
+
+    server.enqueueConnect();
+
+    server.gateway().onOpen((ws, r) -> ws.send("DUMMY"));
+    subject.onGatewayPayload(m -> subject.close());
+
+    subject.onClose(closeGate::countDown);
+
+    subject.connect();
+
+    Assert.thatWithinOneSecond(closeGate::await);
   }
 
   @Test

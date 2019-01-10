@@ -21,7 +21,11 @@ public class Identify {
                 Json.object()
                     .add("token", smalld.getToken())
                     .add("properties", properties)
-                    .add("compress", false);
+                    .add("compress", false)
+                    .add(
+                        "shard",
+                        Json.array().add(smalld.getCurrentShard()).add(smalld.getNumberOfShards()));
+
             JsonObject identify = Json.object().add("op", 2).add("d", d);
             smalld.sendGatewayPayload(identify.toString());
           }

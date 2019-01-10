@@ -49,6 +49,18 @@ public class TestSmallD {
   }
 
   @Test
+  public void currentShard_whenNotSetExplicitly_shouldBeZero() {
+    SmallD defaultSmallD = new SmallD(MockDiscordServer.TOKEN);
+    Assertions.assertThat(defaultSmallD.getCurrentShard()).isEqualTo(0);
+  }
+
+  @Test
+  public void numberOfShards_whenNotSetExplicitly_shouldBeOne() {
+    SmallD defaultSmallD = new SmallD(MockDiscordServer.TOKEN);
+    Assertions.assertThat(defaultSmallD.getNumberOfShards()).isEqualTo(1);
+  }
+
+  @Test
   public void connect_shouldSendGetGatewayBotRequest() {
     server.enqueueGatewayBotResponse();
 

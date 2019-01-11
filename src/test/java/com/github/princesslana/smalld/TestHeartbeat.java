@@ -13,6 +13,9 @@ public class TestHeartbeat {
 
   private MockDiscordServer server;
 
+  private static final String HELLO_PAYLOAD =
+      Json.object().add("op", 10).add("d", Json.object().add("heartbeat_interval", 500)).toString();
+
   @BeforeEach
   public void subject() {
     server = new MockDiscordServer();
@@ -35,13 +38,7 @@ public class TestHeartbeat {
 
   @Test
   public void subject_whenHelloReceived_shouldSendHeartbeat() {
-    String hello =
-        Json.object()
-            .add("op", 10)
-            .add("d", Json.object().add("heartbeat_interval", 500))
-            .toString();
-
-    server.gateway().onOpen((ws, r) -> ws.send(hello));
+    server.gateway().onOpen((ws, r) -> ws.send(HELLO_PAYLOAD));
 
     server.connect(smalld);
 
@@ -61,5 +58,31 @@ public class TestHeartbeat {
     server.connect(smalld);
 
     Assert.thatNotWithinOneSecond(() -> server.gateway().assertThatNext().isNotNull());
+  }
+
+  @Test
+  public void subject_whenNoSequenceReceivedYet_shouldBeNullInHeartbeat() {
+    server.gateway().onOpen((ws, r) -> ws.send(HELLO_PAYLOAD));
+
+    server.connect(smalld);
+
+    Assert.thatWithinOneSecond(() -> server.gateway().assertJsonMessage().node("d").isNull());
+  }
+
+  @Test
+  public void subject_whenPayloadReceivedWithSequence_shouldIncludeInHeartbeat() {
+    String dispatch = Json.object().add("op", 0).add("s", 0).toString();
+
+    server
+        .gateway()
+        .onOpen(
+            (ws, r) -> {
+              ws.send(HELLO_PAYLOAD);
+              ws.send(dispatch);
+            });
+
+    server.connect(smalld);
+
+    Assert.thatWithinOneSecond(() -> server.gateway().assertJsonMessage().node("d").isEqualTo(0));
   }
 }

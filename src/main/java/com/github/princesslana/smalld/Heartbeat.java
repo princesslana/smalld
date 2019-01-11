@@ -2,6 +2,7 @@ package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.JsonValue;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,10 +29,10 @@ public class Heartbeat {
             onHello(p.get("d").asObject());
           }
 
-          long sequence = p.getLong("s", -1);
+          JsonValue sequence = p.get("s");
 
-          if (sequence >= 0) {
-            lastSeenSequenceNumber = Optional.of(sequence);
+          if (sequence != null && !sequence.isNull()) {
+            lastSeenSequenceNumber = Optional.of(sequence.asLong());
           }
         });
   }

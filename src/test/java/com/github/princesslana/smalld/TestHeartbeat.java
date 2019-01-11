@@ -85,4 +85,23 @@ public class TestHeartbeat {
 
     Assert.thatWithinOneSecond(() -> server.gateway().assertJsonMessage().node("d").isEqualTo(0));
   }
+
+  @Test
+  public void subject_whenNullSequenceReceived_shouldSendLastSequenceNumber() {
+    String dispatch = Json.object().add("op", 0).add("s", 42).toString();
+    String withNullSequence = Json.object().add("op", 0).add("s", Json.NULL).toString();
+
+    server
+        .gateway()
+        .onOpen(
+            (ws, r) -> {
+              ws.send(HELLO_PAYLOAD);
+              ws.send(dispatch);
+              ws.send(withNullSequence);
+            });
+
+    server.connect(smalld);
+
+    Assert.thatWithinOneSecond(() -> server.gateway().assertJsonMessage().node("d").isEqualTo(42));
+  }
 }

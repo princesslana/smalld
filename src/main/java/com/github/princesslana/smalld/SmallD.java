@@ -201,6 +201,7 @@ public class SmallD implements AutoCloseable {
     SmallD smalld = new SmallD(token);
 
     new Identify(smalld);
+    new Heartbeat(smalld);
 
     return smalld;
   }

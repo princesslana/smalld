@@ -103,6 +103,11 @@ public class SmallD implements AutoCloseable {
                 LOG.debug("Gateway Receive: {}", text);
                 gatewayPayloadListeners.forEach(l -> l.accept(text));
               }
+
+              @Override
+              public void onFailure(WebSocket ws, Throwable t, Response response) {
+                LOG.debug("onFailure: {}", response, t);
+              }
             });
   }
 

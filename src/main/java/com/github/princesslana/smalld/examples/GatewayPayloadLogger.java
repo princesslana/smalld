@@ -12,17 +12,16 @@ public class GatewayPayloadLogger {
     try (SmallD smalld = SmallD.create(System.getenv("SMALLD_TOKEN"))) {
       smalld.onGatewayPayload(
           p -> {
-            JsonObject json = Json.parse(p).asObject();
+            JsonObject in = Json.parse(p).asObject();
 
-            if (!isMessageFromBot(json)) {
-              String json = json.toString(WriterConfig.PRETTY_PRINT);
+            if (!isMessageFromBot(in)) {
+              String out = in.toString(WriterConfig.PRETTY_PRINT);
 
-              if (json.length() > 1950) {
-                json = json.substring(0, 1950) + "...";
+              if (out.length() > 1950) {
+                out = out.substring(0, 1950) + "...";
               }
 
-              String content =
-                  "```javascript\n" + json + "\n```";
+              String content = "```javascript\n" + out + "\n```";
 
               smalld.post(
                   "/channels/" + channel + "/messages",

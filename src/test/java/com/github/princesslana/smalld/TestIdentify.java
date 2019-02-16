@@ -19,6 +19,16 @@ public class TestIdentify {
   private static final BiConsumer<WebSocket, Response> SEND_HELLO =
       (ws, r) -> ws.send(Json.object().add("op", 10).toString());
 
+  private static final BiConsumer<WebSocket, Response> SEND_READY =
+      (ws, r) ->
+          ws.send(
+              Json.object()
+                  .add("op", 0)
+                  .add("s", 1)
+                  .add("t", "READY")
+                  .add("d", Json.object().add("session_id", "abc123"))
+                  .toString());
+
   @BeforeEach
   public void subject() {
     server = new MockDiscordServer();
@@ -58,6 +68,24 @@ public class TestIdentify {
                     j -> j.node("d.properties.$os").isNotNull(),
                     j -> j.node("d.properties.$device").isEqualTo("SmallD"),
                     j -> j.node("d.properties.$browser").isEqualTo("SmallD")));
+  }
+
+  @Test
+  public void subject_whenHelloReceivedAfterReady_shouldSendResume() {
+    server.gateway().onOpen(SEND_READY.andThen(SEND_HELLO));
+
+    server.connect(smalld);
+
+    Assert.thatWithinOneSecond(
+        () ->
+            server
+                .gateway()
+                .assertJsonMessage()
+                .and(
+                    j -> j.node("op").isEqualTo(6),
+                    j -> j.node("d.token").isEqualTo(MockDiscordServer.TOKEN),
+                    j -> j.node("d.session_id").isEqualTo("abc123"),
+                    j -> j.node("d.seq").isEqualTo(1)));
   }
 
   @Test

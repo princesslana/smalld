@@ -24,7 +24,7 @@ public class Identify {
             onHello();
           }
 
-          if (p.getInt("op", -1) == 0 && p.getString("t", "").equals("READY")) {
+          if (p.getString("t", "").equals("READY")) {
             onReady(p.get("d").asObject());
           }
 
@@ -72,10 +72,6 @@ public class Identify {
   }
 
   private void onReady(JsonObject d) {
-    JsonValue sessionId = d.get("session_id");
-
-    if (sessionId != null && !sessionId.isNull()) {
-      this.sessionId = Optional.of(sessionId.asString());
-    }
+    this.sessionId = Optional.of(d.get("session_id").asString());
   }
 }

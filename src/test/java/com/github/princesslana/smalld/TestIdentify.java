@@ -16,6 +16,9 @@ public class TestIdentify {
 
   private MockDiscordServer server;
 
+  private static final BiConsumer<WebSocket, Response> SEND_HEARTBEAT =
+      (ws, r) -> ws.send(Json.object().add("op", 1).add("s", Json.NULL).toString());
+
   private static final BiConsumer<WebSocket, Response> SEND_HELLO =
       (ws, r) -> ws.send(Json.object().add("op", 10).toString());
 
@@ -89,6 +92,19 @@ public class TestIdentify {
   }
 
   @Test
+  public void subject_whenSequenceReceivedBeforeSessoinId_shouldSendIdentify() {
+    BiConsumer<WebSocket, Response> sendWithSequence =
+        (ws, r) -> ws.send(Json.object().add("op", 0).add("s", 1).toString());
+
+    server.gateway().onOpen(sendWithSequence.andThen(SEND_HELLO));
+
+    server.connect(smalld);
+
+    Assert.thatWithinOneSecond(
+        () -> server.gateway().assertJsonMessage().and(j -> j.node("op").isEqualTo(2)));
+  }
+
+  @Test
   public void subject_whenShardSet_shouldSendShardDetail() {
     smalld.setShard(2, 5);
 
@@ -102,7 +118,7 @@ public class TestIdentify {
 
   @Test
   public void subject_whenHeartbeatReceived_shouldSendNothing() {
-    server.gateway().onOpen((ws, r) -> ws.send(Json.object().add("op", 1).toString()));
+    server.gateway().onOpen(SEND_HEARTBEAT);
 
     server.connect(smalld);
 

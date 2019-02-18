@@ -23,7 +23,7 @@ public class TestHeartbeat {
 
     smalld = server.newSmallD();
 
-    subject = new Heartbeat(smalld);
+    subject = new Heartbeat(smalld, new SequenceNumber(smalld));
   }
 
   @AfterEach

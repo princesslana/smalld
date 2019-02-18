@@ -16,8 +16,21 @@ public class TestIdentify {
 
   private MockDiscordServer server;
 
+  private static final BiConsumer<WebSocket, Response> SEND_HEARTBEAT =
+      (ws, r) -> ws.send(Json.object().add("op", 1).add("s", Json.NULL).toString());
+
   private static final BiConsumer<WebSocket, Response> SEND_HELLO =
       (ws, r) -> ws.send(Json.object().add("op", 10).toString());
+
+  private static final BiConsumer<WebSocket, Response> SEND_READY =
+      (ws, r) ->
+          ws.send(
+              Json.object()
+                  .add("op", 0)
+                  .add("s", 1)
+                  .add("t", "READY")
+                  .add("d", Json.object().add("session_id", "abc123"))
+                  .toString());
 
   @BeforeEach
   public void subject() {
@@ -26,7 +39,7 @@ public class TestIdentify {
 
     smalld = server.newSmallD();
 
-    subject = new Identify(smalld);
+    subject = new Identify(smalld, new SequenceNumber(smalld));
   }
 
   @AfterEach
@@ -61,6 +74,37 @@ public class TestIdentify {
   }
 
   @Test
+  public void subject_whenHelloReceivedAfterReady_shouldSendResume() {
+    server.gateway().onOpen(SEND_READY.andThen(SEND_HELLO));
+
+    server.connect(smalld);
+
+    Assert.thatWithinOneSecond(
+        () ->
+            server
+                .gateway()
+                .assertJsonMessage()
+                .and(
+                    j -> j.node("op").isEqualTo(6),
+                    j -> j.node("d.token").isEqualTo(MockDiscordServer.TOKEN),
+                    j -> j.node("d.session_id").isEqualTo("abc123"),
+                    j -> j.node("d.seq").isEqualTo(1)));
+  }
+
+  @Test
+  public void subject_whenSequenceReceivedBeforeSessoinId_shouldSendIdentify() {
+    BiConsumer<WebSocket, Response> sendWithSequence =
+        (ws, r) -> ws.send(Json.object().add("op", 0).add("s", 1).toString());
+
+    server.gateway().onOpen(sendWithSequence.andThen(SEND_HELLO));
+
+    server.connect(smalld);
+
+    Assert.thatWithinOneSecond(
+        () -> server.gateway().assertJsonMessage().and(j -> j.node("op").isEqualTo(2)));
+  }
+
+  @Test
   public void subject_whenShardSet_shouldSendShardDetail() {
     smalld.setShard(2, 5);
 
@@ -74,7 +118,7 @@ public class TestIdentify {
 
   @Test
   public void subject_whenHeartbeatReceived_shouldSendNothing() {
-    server.gateway().onOpen((ws, r) -> ws.send(Json.object().add("op", 1).toString()));
+    server.gateway().onOpen(SEND_HEARTBEAT);
 
     server.connect(smalld);
 

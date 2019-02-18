@@ -2,19 +2,19 @@ package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonValue;
 import java.util.Optional;
 
 public class Identify {
 
   private final SmallD smalld;
 
-  private Optional<Long> lastSeenSequenceNumber = Optional.empty();
+  private final SequenceNumber sequenceNumber;
 
   private Optional<String> sessionId = Optional.empty();
 
-  public Identify(SmallD smalld) {
+  public Identify(SmallD smalld, SequenceNumber sequenceNumber) {
     this.smalld = smalld;
+    this.sequenceNumber = sequenceNumber;
 
     smalld.onGatewayPayload(
         s -> {
@@ -27,18 +27,13 @@ public class Identify {
           if (p.getString("t", "").equals("READY")) {
             onReady(p.get("d").asObject());
           }
-
-          JsonValue sequence = p.get("s");
-
-          if (sequence != null && !sequence.isNull()) {
-            lastSeenSequenceNumber = Optional.of(sequence.asLong());
-          }
         });
   }
 
   private void onHello() {
     JsonObject payload =
-        lastSeenSequenceNumber
+        sequenceNumber
+            .getLastSeen()
             .flatMap(seq -> sessionId.map(sid -> resume(seq, sid)))
             .orElse(identify());
 

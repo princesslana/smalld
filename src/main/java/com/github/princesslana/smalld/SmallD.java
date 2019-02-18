@@ -200,8 +200,9 @@ public class SmallD implements AutoCloseable {
   public static SmallD create(String token) {
     SmallD smalld = new SmallD(token);
 
-    new Identify(smalld);
-    new Heartbeat(smalld);
+    SequenceNumber seq = new SequenceNumber(smalld);
+    new Identify(smalld, seq);
+    new Heartbeat(smalld, seq);
 
     return smalld;
   }

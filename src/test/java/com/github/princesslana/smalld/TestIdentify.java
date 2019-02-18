@@ -39,7 +39,7 @@ public class TestIdentify {
 
     smalld = server.newSmallD();
 
-    subject = new Identify(smalld);
+    subject = new Identify(smalld, new SequenceNumber(smalld));
   }
 
   @AfterEach

@@ -1,6 +1,6 @@
 
 jobs:
-- job: "Java 8"
+- job: "Java8"
   pool:
     vmImage: 'Ubuntu-16.04'
   steps:
@@ -12,7 +12,7 @@ jobs:
       publishJUnitResults: false
       goals: 'verify'
 
-- job: "Java 11"
+- job: "Java11"
   pool:
     vmImage: 'Ubuntu-16.04'
   steps:

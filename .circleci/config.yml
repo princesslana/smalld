@@ -12,3 +12,10 @@ jobs:
     steps:
       - checkout
       - run: mvn -B verify
+
+workflows:
+  version: 2
+  verify:
+    jobs:
+      - java8
+      - java11

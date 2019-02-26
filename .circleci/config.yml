@@ -3,7 +3,6 @@ build: &build
   - checkout
   - run: |
       echo 'export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"' >> $BASH_ENV
-  - run: |
       echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
   - restore_cache:
       key: smalld-{{ checksum "pom.xml" }}

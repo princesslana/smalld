@@ -6,7 +6,6 @@ steps:
 - task: Maven@3
   inputs:
     mavenPomFile: 'pom.xml'
-    mavenOptions: '-B'
     javaHomeOption: 'JDKVersion'
     jdkVersionOption: '1.8'
     publishJUnitResults: false

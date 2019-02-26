@@ -1,6 +1,13 @@
 build: &build
   steps:
   - checkout
+  - restore_cache:
+      key: smalld-{{ checksum "pom.xml" }}
+  - run: mvn -B dependency:go-offline
+  - save_cache:
+      paths:
+      - ~/.m2
+      key: smalld-{{ checksum "pom.xml" }}
   - run: mvn -B verify
 
 version: 2
@@ -13,6 +20,10 @@ jobs:
     <<: *build
     docker:
       - image: maven:3-jdk-11
+  corretto8:
+    <<: *build
+    docker:
+      - image: maven:3-amazoncorretto-8
 
 workflows:
   version: 2
@@ -20,3 +31,4 @@ workflows:
     jobs:
       - java8
       - java11
+      - corretto8

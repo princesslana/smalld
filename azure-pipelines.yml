@@ -2,11 +2,24 @@
 pool:
   vmImage: 'Ubuntu-16.04'
 
-steps:
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'pom.xml'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.8'
-    publishJUnitResults: false
-    goals: 'verify'
+jobs:
+- job: "Java 8"
+  steps:
+  - task: Maven@3
+    inputs:
+      mavenPomFile: 'pom.xml'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.8'
+      publishJUnitResults: false
+      goals: 'verify'
+
+- job: "Java 11"
+  steps:
+  - task: Maven@3
+    inputs:
+      mavenPomFile: 'pom.xml'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.11'
+      publishJUnitResults: false
+      goals: 'verify'
+ 

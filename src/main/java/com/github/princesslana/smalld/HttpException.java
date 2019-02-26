@@ -32,12 +32,6 @@ public class HttpException extends SmallDException {
     }
   }
 
-  public static class RateLimitException extends ClientException {
-    public RateLimitException(int code, String status, String body) {
-      super(code, status, body);
-    }
-  }
-
   public static class ServerException extends HttpException {
     public ServerException(int code, String status, String body) {
       super(code, status, body);

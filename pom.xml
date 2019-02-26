@@ -42,9 +42,10 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <lib.assertj.version>3.10.0</lib.assertj.version>
+    <lib.jqwik.version>1.1.0</lib.jqwik.version>
     <lib.json-unit-assertj.version>2.1.1</lib.json-unit-assertj.version>
     <lib.jsonorg.version>20180130</lib.jsonorg.version>
-    <lib.junit.version>5.3.1</lib.junit.version>
+    <lib.junit.version>5.4.0</lib.junit.version>
     <lib.minimal-json.version>0.9.5</lib.minimal-json.version>
     <lib.okhttp.version>3.12.0</lib.okhttp.version>
     <lib.slf4j.version>1.7.25</lib.slf4j.version>
@@ -70,7 +71,7 @@
     <plugin.sortpom.version>2.10.0</plugin.sortpom.version>
     <plugin.source.version>3.0.1</plugin.source.version>
     <plugin.spotless.version>1.16.0</plugin.spotless.version>
-    <plugin.surefire.version>3.0.0-M1</plugin.surefire.version>
+    <plugin.surefire.version>3.0.0-M3</plugin.surefire.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -95,6 +96,12 @@
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
       <version>${lib.assertj.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.jqwik</groupId>
+      <artifactId>jqwik</artifactId>
+      <version>${lib.jqwik.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

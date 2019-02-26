@@ -1,5 +1,8 @@
 package com.github.princesslana.smalld;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -16,6 +19,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.jqwik.api.ForAll;
+import net.jqwik.api.constraints.Positive;
+import net.jqwik.api.Property;
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
 
 public class TestSmallD {
 
@@ -200,11 +208,11 @@ public class TestSmallD {
   }
 
   @Test
-  public void get_whenHttp429_shouldThrowRateLimitException() {
+  public void get_whenHttp429WithNoBody_shouldThrowClientException() {
     server.connect(subject);
     server.enqueue(new MockResponse().setResponseCode(429));
 
-    Assertions.assertThatExceptionOfType(HttpException.RateLimitException.class)
+    Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
         .isThrownBy(() -> subject.get("/test/url"));
   }
 
@@ -217,6 +225,24 @@ public class TestSmallD {
 
     Assertions.assertThatExceptionOfType(HttpException.ServerException.class)
         .isThrownBy(() -> subject.get("/test/url"));
+  }
+
+  @Property
+  public void get_whenHttp429_shouldThrowRateLimitException(@ForAll @Positive long retryAfter, @ForAll long epochMills) {
+
+    MockDiscordServer server = new MockDiscordServer();
+    Instant now = Instant.ofEpochMilli(epochMills);
+
+    SmallD smalld = server.newSmallD(Clock.fixed(now, ZoneId.systemDefault()));
+
+    server.connect(smalld);
+
+    JsonObject response = Json.object().add("retry_after", retryAfter);
+
+    server.enqueue(new MockResponse().setResponseCode(429).setBody(response.toString()));
+
+    Assertions.assertThatExceptionOfType(RateLimitException.class)
+      .isThrownBy(() -> smalld.get("/test/url"));
   }
 
   @Test

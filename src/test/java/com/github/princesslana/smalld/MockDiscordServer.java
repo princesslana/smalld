@@ -2,6 +2,7 @@ package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
 import java.io.IOException;
+import java.time.Clock;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -22,7 +23,11 @@ public class MockDiscordServer implements AutoCloseable {
   private int requestsTaken = 0;
 
   public SmallD newSmallD() {
-    SmallD smalld = new SmallD(TOKEN);
+    return newSmallD(Clock.systemUTC());
+  }
+
+  public SmallD newSmallD(Clock clock) {
+    SmallD smalld = new SmallD(TOKEN, clock);
     smalld.setBaseUrl(web.url("/api/v6").toString());
     return smalld;
   }

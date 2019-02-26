@@ -1,14 +1,11 @@
 version: 2
 jobs:
-  java8:
+  verify:
+    parameters:
+      image:
+        type: string
     docker:
-      - image: maven:3-jdk-8
-    steps:
-      - checkout
-      - run: mvn -B verify
-  java11:
-    docker:
-      - image: maven:3-jdk-11
+      - image: << parameters.image >>
     steps:
       - checkout
       - run: mvn -B verify
@@ -17,5 +14,8 @@ workflows:
   version: 2
   verify:
     jobs:
-      - java8
-      - java11
+      - verify:
+          image: mvn:3-jdk-8
+      - verify:
+          image: mvn:3-jdk-11
+          

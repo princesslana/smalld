@@ -3,6 +3,6 @@ jobs:
   build:
     docker:
       - image: maven:3-jfk-8
-        steps:
-          - checkout
-          - run: mvn -B verify
+    steps:
+      - checkout
+      - run: mvn -B verify

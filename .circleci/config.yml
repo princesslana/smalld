@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: maven:3-jfk-8
+      - image: maven:3-jdk-8
     steps:
       - checkout
       - run: mvn -B verify

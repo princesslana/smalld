@@ -1,9 +1,8 @@
 
-pool:
-  vmImage: 'Ubuntu-16.04'
-
 jobs:
 - job: "Java 8"
+  pool:
+    vmImage: 'Ubuntu-16.04'
   steps:
   - task: Maven@3
     inputs:
@@ -14,6 +13,8 @@ jobs:
       goals: 'verify'
 
 - job: "Java 11"
+  pool:
+    vmImage: 'Ubuntu-16.04'
   steps:
   - task: Maven@3
     inputs:

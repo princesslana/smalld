@@ -60,10 +60,25 @@ jobs:
           -Dsonar.organization=ianagbip1oti-github
           -Dsonar.host.url=https://sonarcloud.io
           -Dsonar.login=$SONAR_TOKEN
+  deploy_snapshot:
+    docker:
+      - image: maven:3-jdk-8
+    steps:
+      - attach_workspace:
+          at: .
+      - run: |
+          echo 'export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"' >> $BASH_ENV
+          echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
+      - run: |
+          openssl aes-256-cbc -d -in etc/codesigning.asc.enc -out etc/codesigning.asc -k $FILE_ENCRYPTION_PASSPHRASE
+          gpg --batch --fast-import etc/codesigning.asc
+      - restore_cache:
+          key: smalld-{{ checksum "pom.xml" }}
+      - run: mvn -s etc/settings.xml -B -DskipTests=true versions:set-property deploy -P release
 
 workflows:
   version: 2
-  verify:
+  build:
     jobs:
       - dependency_cache
       - java8:
@@ -75,6 +90,12 @@ workflows:
       - corretto8:
           requires:
             - dependency_cache
+      - deploy_snapshot:
+          requires:
+            - java8
+          filters:
+            branches:
+              only: master
       - sonarcloud:
           requires:
             - java8

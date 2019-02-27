@@ -34,7 +34,7 @@ jobs:
           key: smalld-{{ checksum "pom.xml" }}
       - run: mvn -B verify
       - persist_to_workspace:
-          at: .
+          root: .
   java11:
     <<: *build
     docker:

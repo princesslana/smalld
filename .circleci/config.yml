@@ -78,7 +78,7 @@ jobs:
 
 workflows:
   version: 2
-  verify:
+  build:
     jobs:
       - dependency_cache
       - java8:

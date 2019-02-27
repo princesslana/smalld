@@ -424,7 +424,7 @@
             </executions>
             <configuration>
               <gpgArguments>
-                <arg>--pinetry-mode</arg>
+                <arg>--pinentry-mode</arg>
                 <arg>loopback</arg>
               </gpgArguments>
             </configuration>

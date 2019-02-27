@@ -26,6 +26,8 @@ jobs:
     <<: *build
     docker:
       - image: maven:3-jdk-8
+    persist_to_workspace:
+      root: .
   java11:
     <<: *build
     docker:
@@ -34,6 +36,13 @@ jobs:
     <<: *build
     docker:
       - image: maven:3-amazoncorretto-8
+  sonarcloud:
+    docker:
+      - image: maven:3-jdk-8
+    steps:
+      - attach_workspace:
+          at: .
+
 
 workflows:
   version: 2

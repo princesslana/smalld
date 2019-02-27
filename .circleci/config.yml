@@ -70,7 +70,7 @@ jobs:
           echo 'export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"' >> $BASH_ENV
           echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
       - run: |
-          gpg --passphrase=$FILE_ENCRYPTION_PASSPHRASE --yes etc/codesigning.asc.png
+          gpg --yes --passphrase=$FILE_ENCRYPTION_PASSPHRASE --output=etc/codesigning.asc --decrypt etc/codesigning.asc.gpg
           gpg --fast-import etc/codesigning.asc
       - restore_cache:
           key: smalld-{{ checksum "pom.xml" }}

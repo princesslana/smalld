@@ -71,7 +71,7 @@ jobs:
           echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
       - run: |
           openssl aes-256-cbc -d -in etc/codesigning.asc.enc -out etc/codesigning.asc -k $FILE_ENCRYPTION_PASSPHRASE
-          gpg --fast-import etc/codesigning.asc
+          gpg --batch --fast-import etc/codesigning.asc
       - restore_cache:
           key: smalld-{{ checksum "pom.xml" }}
       - run: mvn -s etc/settings.xml -B versions:set-property deploy -P release

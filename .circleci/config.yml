@@ -74,7 +74,7 @@ jobs:
           gpg --batch --fast-import etc/codesigning.asc
       - restore_cache:
           key: smalld-{{ checksum "pom.xml" }}
-      - run: mvn -s etc/settings.xml -B versions:set-property deploy -P release
+      - run: mvn -s etc/settings.xml -B -DskipTests=true versions:set-property deploy -P release
 
 workflows:
   version: 2

@@ -327,6 +327,7 @@
           </dependency>
         </dependencies>
         <configuration>
+          <skip>${skipTests}</skip>
           <coverageThreshold>80</coverageThreshold>
           <mutators>
             <mutator>CONDITIONALS_BOUNDARY</mutator>

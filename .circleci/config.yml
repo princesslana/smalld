@@ -78,3 +78,6 @@ workflows:
       - sonarcloud:
           requires:
             - java8
+          filters:
+            branches:
+              only: master

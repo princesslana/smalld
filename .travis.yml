@@ -31,10 +31,6 @@ jobs:
     - stage: snapshot
       jdk: openjdk8
       script: mvn -s etc/settings.xml -B versions:set-property deploy -P release
-    - jdk: openjdk8
-      git:
-        depth: false
-      script: mvn -B verify sonar:sonar
     - stage: release
       jdk: openjdk8
       env:

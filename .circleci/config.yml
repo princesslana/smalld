@@ -93,6 +93,9 @@ workflows:
       - deploy_snapshot:
           requires:
             - java8
+          filters:
+            branches:
+              only: master
       - sonarcloud:
           requires:
             - java8

@@ -58,3 +58,6 @@ workflows:
       - corretto8:
           requires:
             - dependency_cache
+      - sonarcloud:
+          requires:
+            - java8

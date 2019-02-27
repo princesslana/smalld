@@ -123,5 +123,7 @@ workflows:
             - java11
             - corretto8
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^\d+\.\d+\.\d+$/

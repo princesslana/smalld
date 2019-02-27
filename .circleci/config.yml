@@ -35,6 +35,7 @@ jobs:
       - run: mvn -B verify
       - persist_to_workspace:
           root: .
+          paths: .
   java11:
     <<: *build
     docker:

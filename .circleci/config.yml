@@ -1,12 +1,12 @@
 build: &build
   steps:
-  - checkout
-  - run: |
-      echo 'export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"' >> $BASH_ENV
-      echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
-  - restore_cache:
-      key: smalld-{{ checksum "pom.xml" }}
-  - run: mvn -B verify
+    - checkout
+    - run: |
+        echo 'export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"' >> $BASH_ENV
+        echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
+    - restore_cache:
+        key: smalld-{{ checksum "pom.xml" }}
+    - run: mvn -B verify
 
 version: 2
 jobs:
@@ -26,8 +26,6 @@ jobs:
     <<: *build
     docker:
       - image: maven:3-jdk-8
-    persist_to_workspace:
-      root: .
   java11:
     <<: *build
     docker:
@@ -40,9 +38,17 @@ jobs:
     docker:
       - image: maven:3-jdk-8
     steps:
-      - attach_workspace:
-          at: .
-
+      - checkout
+      - run: |
+          echo 'export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"' >> $BASH_ENV
+          echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
+      - restore_cache:
+          key: smalld-{{ checksum "pom.xml" }}
+      - run: >
+          mvn -B verify sonar:sonar
+          -Dsonar.organization=ianagbip1oti-github
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.login=$SONAR_TOKEN
 
 workflows:
   version: 2

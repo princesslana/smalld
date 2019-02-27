@@ -48,7 +48,7 @@ jobs:
     docker:
       - image: maven:3-jdk-8
     steps:
-      - attach_to_workspace:
+      - attach_workspace:
           at: .
       - run: |
           echo 'export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"' >> $BASH_ENV

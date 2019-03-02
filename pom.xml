@@ -334,6 +334,7 @@
           </dependency>
         </dependencies>
         <configuration>
+          <skip>${skipTests}</skip>
           <coverageThreshold>80</coverageThreshold>
           <mutators>
             <mutator>CONDITIONALS_BOUNDARY</mutator>
@@ -371,14 +372,6 @@
         <groupId>com.github.ekryd.sortpom</groupId>
         <artifactId>sortpom-maven-plugin</artifactId>
         <version>${plugin.sortpom.version}</version>
-        <executions>
-          <execution>
-            <phase>verify</phase>
-            <goals>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
           <createBackupFile>false</createBackupFile>
           <verifyFail>Stop</verifyFail>
@@ -436,6 +429,12 @@
                 </goals>
               </execution>
             </executions>
+            <configuration>
+              <gpgArguments>
+                <arg>--pinentry-mode</arg>
+                <arg>loopback</arg>
+              </gpgArguments>
+            </configuration>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>

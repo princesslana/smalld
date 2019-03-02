@@ -1,0 +1,129 @@
+build: &build
+  steps:
+    - checkout
+    - run: |
+        echo 'export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"' >> $BASH_ENV
+        echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
+    - restore_cache:
+        key: smalld-{{ checksum "pom.xml" }}
+    - run: mvn -B verify
+
+version: 2
+jobs:
+  dependency_cache:
+    docker:
+      - image: maven:3-jdk-8
+    steps:
+      - checkout
+      - restore_cache:
+          key: smalld-{{ checksum "pom.xml" }}
+      - run: mvn -B dependency:go-offline
+      - save_cache:
+          paths:
+          - ~/.m2
+          key: smalld-{{ checksum "pom.xml" }}
+  java8:
+    docker:
+      - image: maven:3-jdk-8
+    steps:
+      - checkout
+      - run: |
+          echo 'export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"' >> $BASH_ENV
+          echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
+      - restore_cache:
+          key: smalld-{{ checksum "pom.xml" }}
+      - run: mvn -B verify
+      - persist_to_workspace:
+          root: .
+          paths: .
+  java11:
+    <<: *build
+    docker:
+      - image: maven:3-jdk-11
+  corretto8:
+    <<: *build
+    docker:
+      - image: maven:3-amazoncorretto-8
+  sonarcloud:
+    docker:
+      - image: maven:3-jdk-8
+    steps:
+      - attach_workspace:
+          at: .
+      - run: |
+          echo 'export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"' >> $BASH_ENV
+          echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
+      - restore_cache:
+          key: smalld-{{ checksum "pom.xml" }}
+      - run: >
+          mvn -B sonar:sonar
+          -Dsonar.organization=ianagbip1oti-github
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.login=$SONAR_TOKEN
+  deploy_snapshot:
+    docker:
+      - image: maven:3-jdk-8
+    steps:
+      - attach_workspace:
+          at: .
+      - run: |
+          echo 'export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"' >> $BASH_ENV
+          echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
+      - run: |
+          openssl aes-256-cbc -d -in etc/codesigning.asc.enc -out etc/codesigning.asc -k $FILE_ENCRYPTION_PASSPHRASE
+          gpg --batch --fast-import etc/codesigning.asc
+      - restore_cache:
+          key: smalld-{{ checksum "pom.xml" }}
+      - run: mvn -s etc/settings.xml -B -DskipTests=true versions:set-property deploy -P release
+  deploy_release:
+    docker:
+      - image: maven:3-jdk-8
+    steps:
+      - attach_workspace:
+          at: .
+      - run: |
+          echo 'export SMALLD_VERSION="$(git describe --dirty --tags)"' >> $BASH_ENV
+          echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
+      - run: |
+          openssl aes-256-cbc -d -in etc/codesigning.asc.enc -out etc/codesigning.asc -k $FILE_ENCRYPTION_PASSPHRASE
+          gpg --batch --fast-import etc/codesigning.asc
+      - restore_cache:
+          key: smalld-{{ checksum "pom.xml" }}
+      - run: mvn -s etc/settings.xml -B -DskipTests=true versions:set-property deploy -P release
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - dependency_cache
+      - java8:
+          requires:
+            - dependency_cache
+      - java11:
+          requires:
+            - dependency_cache
+      - corretto8:
+          requires:
+            - dependency_cache
+      - sonarcloud:
+          requires:
+            - java8
+          filters:
+            branches:
+              only: master
+      - deploy_snapshot:
+          requires:
+            - java8
+          filters:
+            branches:
+              only: master
+      - release:
+          requires:
+            - java8
+            - java11
+            - corretto8
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/

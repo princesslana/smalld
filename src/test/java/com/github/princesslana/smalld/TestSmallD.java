@@ -1,5 +1,7 @@
 package com.github.princesslana.smalld;
 
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -19,11 +21,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.jqwik.api.ForAll;
-import net.jqwik.api.constraints.Positive;
-import net.jqwik.api.Property;
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonObject;
 
 public class TestSmallD {
 
@@ -197,20 +194,11 @@ public class TestSmallD {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {400, 404, 422, 429, 499})
+  @ValueSource(ints = {400, 404, 422, 499})
   public void get_whenHttp4xx_shouldThrowClientException(int status) {
     server.connect(subject);
 
     server.enqueue(new MockResponse().setResponseCode(status));
-
-    Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
-        .isThrownBy(() -> subject.get("/test/url"));
-  }
-
-  @Test
-  public void get_whenHttp429WithNoBody_shouldThrowClientException() {
-    server.connect(subject);
-    server.enqueue(new MockResponse().setResponseCode(429));
 
     Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
         .isThrownBy(() -> subject.get("/test/url"));
@@ -227,22 +215,65 @@ public class TestSmallD {
         .isThrownBy(() -> subject.get("/test/url"));
   }
 
-  @Property
-  public void get_whenHttp429_shouldThrowRateLimitException(@ForAll @Positive long retryAfter, @ForAll long epochMills) {
+  @Test
+  public void get_whenHttp429WithNoBody_shouldThrowClientException() {
+    server.connect(subject);
+    server.enqueue(new MockResponse().setResponseCode(429));
 
-    MockDiscordServer server = new MockDiscordServer();
-    Instant now = Instant.ofEpochMilli(epochMills);
+    Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
+  }
 
-    SmallD smalld = server.newSmallD(Clock.fixed(now, ZoneId.systemDefault()));
+  @Test
+  public void get_whenHttp429WithRetryAfter_shouldThrowRateLimitException() {
+    long now = System.currentTimeMillis();
+
+    SmallD smalld =
+        server.newSmallD(Clock.fixed(Instant.ofEpochMilli(now), ZoneId.systemDefault()));
 
     server.connect(smalld);
 
-    JsonObject response = Json.object().add("retry_after", retryAfter);
+    JsonObject response = Json.object().add("retry_after", 100);
 
     server.enqueue(new MockResponse().setResponseCode(429).setBody(response.toString()));
 
-    Assertions.assertThatExceptionOfType(RateLimitException.class)
-      .isThrownBy(() -> smalld.get("/test/url"));
+    Throwable thrown = Assertions.catchThrowable(() -> smalld.get("/test/url"));
+
+    Assertions.assertThat(thrown)
+        .isInstanceOf(RateLimitException.class)
+        .hasFieldOrPropertyWithValue("expiry", Instant.ofEpochMilli(now + 100));
+  }
+
+  @Test
+  public void get_whenHttp429WithRetryAfterZero_shouldThrowRateLimitException() {
+    long now = System.currentTimeMillis();
+
+    SmallD smalld =
+        server.newSmallD(Clock.fixed(Instant.ofEpochMilli(now), ZoneId.systemDefault()));
+
+    server.connect(smalld);
+
+    JsonObject response = Json.object().add("retry_after", 0);
+
+    server.enqueue(new MockResponse().setResponseCode(429).setBody(response.toString()));
+
+    Throwable thrown = Assertions.catchThrowable(() -> smalld.get("/test/url"));
+
+    Assertions.assertThat(thrown)
+        .isInstanceOf(RateLimitException.class)
+        .hasFieldOrPropertyWithValue("expiry", Instant.ofEpochMilli(now));
+  }
+
+  @Test
+  public void get_whenHttp429WithJsonNoRetryAfter_shouldThrowClientException() {
+    server.connect(subject);
+
+    JsonObject response = Json.object().add("other_key", 1000000);
+
+    server.enqueue(new MockResponse().setResponseCode(429).setBody(response.toString()));
+
+    Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
   }
 
   @Test

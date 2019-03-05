@@ -29,6 +29,7 @@ public class SmallD implements AutoCloseable {
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
   private final String token;
+  private final Clock clock;
 
   private int currentShard = 0;
   private int numberOfShards = 1;
@@ -57,6 +58,7 @@ public class SmallD implements AutoCloseable {
 
   public SmallD(String token, Clock clock) {
     this.token = token;
+    this.clock = clock;
 
     try {
       Properties version = new Properties();
@@ -187,7 +189,19 @@ public class SmallD implements AutoCloseable {
 
       LOG.debug("HTTP Response: [{} {}] {}", code, status, body);
 
-      if (response.code() >= 500) {
+      if (response.code() == 429) {
+        try {
+          long retryAfter = Json.parse(body).asObject().getLong("retry_after", -1);
+
+          if (retryAfter < 0) {
+            throw new HttpException.ClientException(code, status, body);
+          }
+
+          throw new RateLimitException(clock.instant().plusMillis(retryAfter));
+        } catch (ParseException e) {
+          throw new HttpException.ClientException(code, status, body);
+        }
+      } else if (response.code() >= 500) {
         throw new HttpException.ServerException(code, status, body);
       } else if (response.code() >= 400) {
         throw new HttpException.ClientException(code, status, body);

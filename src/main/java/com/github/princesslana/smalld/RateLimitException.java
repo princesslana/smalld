@@ -4,7 +4,7 @@ import java.time.Instant;
 
 public class RateLimitException extends SmallDException {
 
-  private final Instant expiry;
+  private Instant expiry;
 
   public RateLimitException(Instant expiry) {
     this.expiry = expiry;
@@ -14,4 +14,3 @@ public class RateLimitException extends SmallDException {
     return expiry;
   }
 }
-

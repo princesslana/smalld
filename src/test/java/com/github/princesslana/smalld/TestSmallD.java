@@ -224,8 +224,9 @@ public class TestSmallD {
         .isThrownBy(() -> subject.get("/test/url"));
   }
 
-  @Test
-  public void get_whenHttp429WithRetryAfter_shouldThrowRateLimitException() {
+  @ParameterizedTest
+  @ValueSource(ints = {0, 1, 100})
+  public void get_whenHttp429WithRetryAfter_shouldThrowRateLimitException(int retryAfter) {
     long now = System.currentTimeMillis();
 
     SmallD smalld =
@@ -233,7 +234,7 @@ public class TestSmallD {
 
     server.connect(smalld);
 
-    JsonObject response = Json.object().add("retry_after", 100);
+    JsonObject response = Json.object().add("retry_after", retryAfter);
 
     server.enqueue(new MockResponse().setResponseCode(429).setBody(response.toString()));
 
@@ -241,27 +242,7 @@ public class TestSmallD {
 
     Assertions.assertThat(thrown)
         .isInstanceOf(RateLimitException.class)
-        .hasFieldOrPropertyWithValue("expiry", Instant.ofEpochMilli(now + 100));
-  }
-
-  @Test
-  public void get_whenHttp429WithRetryAfterZero_shouldThrowRateLimitException() {
-    long now = System.currentTimeMillis();
-
-    SmallD smalld =
-        server.newSmallD(Clock.fixed(Instant.ofEpochMilli(now), ZoneId.systemDefault()));
-
-    server.connect(smalld);
-
-    JsonObject response = Json.object().add("retry_after", 0);
-
-    server.enqueue(new MockResponse().setResponseCode(429).setBody(response.toString()));
-
-    Throwable thrown = Assertions.catchThrowable(() -> smalld.get("/test/url"));
-
-    Assertions.assertThat(thrown)
-        .isInstanceOf(RateLimitException.class)
-        .hasFieldOrPropertyWithValue("expiry", Instant.ofEpochMilli(now));
+        .hasFieldOrPropertyWithValue("expiry", Instant.ofEpochMilli(now + retryAfter));
   }
 
   @Test

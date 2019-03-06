@@ -1,7 +1,5 @@
 package com.github.princesslana.smalld;
 
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonObject;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -216,7 +214,7 @@ public class TestSmallD {
   }
 
   @Test
-  public void get_whenHttp429WithNoBody_shouldThrowClientException() {
+  public void get_whenHttp429WithNoRetryAfterHeader_shouldThrowClientException() {
     server.connect(subject);
     server.enqueue(new MockResponse().setResponseCode(429));
 
@@ -226,7 +224,7 @@ public class TestSmallD {
 
   @ParameterizedTest
   @ValueSource(ints = {0, 1, 100})
-  public void get_whenHttp429WithRetryAfter_shouldThrowRateLimitException(int retryAfter) {
+  public void get_whenHttp429WithRetryAfterHeader_shouldThrowRateLimitException(int retryAfter) {
     long now = System.currentTimeMillis();
 
     SmallD smalld =
@@ -234,27 +232,13 @@ public class TestSmallD {
 
     server.connect(smalld);
 
-    JsonObject response = Json.object().add("retry_after", retryAfter);
-
-    server.enqueue(new MockResponse().setResponseCode(429).setBody(response.toString()));
+    server.enqueue(new MockResponse().setResponseCode(429).setHeader("Retry-After", retryAfter));
 
     Throwable thrown = Assertions.catchThrowable(() -> smalld.get("/test/url"));
 
     Assertions.assertThat(thrown)
         .isInstanceOf(RateLimitException.class)
         .hasFieldOrPropertyWithValue("expiry", Instant.ofEpochMilli(now + retryAfter));
-  }
-
-  @Test
-  public void get_whenHttp429WithJsonNoRetryAfter_shouldThrowClientException() {
-    server.connect(subject);
-
-    JsonObject response = Json.object().add("other_key", 1000000);
-
-    server.enqueue(new MockResponse().setResponseCode(429).setBody(response.toString()));
-
-    Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
-        .isThrownBy(() -> subject.get("/test/url"));
   }
 
   @Test

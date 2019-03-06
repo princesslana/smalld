@@ -190,15 +190,11 @@ public class SmallD implements AutoCloseable {
       LOG.debug("HTTP Response: [{} {}] {}", code, status, body);
 
       if (response.code() == 429) {
-        try {
-          long retryAfter = Json.parse(body).asObject().getLong("retry_after", -1);
+        String retryAfter = response.header("Retry-After");
 
-          if (retryAfter < 0) {
-            throw new HttpException.ClientException(code, status, body);
-          }
-
-          throw new RateLimitException(clock.instant().plusMillis(retryAfter));
-        } catch (ParseException e) {
+        if (retryAfter != null) {
+          throw new RateLimitException(clock.instant().plusMillis(Long.parseLong(retryAfter)));
+        } else {
           throw new HttpException.ClientException(code, status, body);
         }
       } else if (response.code() >= 500) {

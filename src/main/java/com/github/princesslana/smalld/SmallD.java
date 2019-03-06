@@ -3,6 +3,7 @@ package com.github.princesslana.smalld;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.ParseException;
 import java.io.IOException;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -28,6 +29,7 @@ public class SmallD implements AutoCloseable {
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
   private final String token;
+  private final Clock clock;
 
   private int currentShard = 0;
   private int numberOfShards = 1;
@@ -51,7 +53,12 @@ public class SmallD implements AutoCloseable {
   private WebSocket gatewayWebSocket;
 
   public SmallD(String token) {
+    this(token, Clock.systemUTC());
+  }
+
+  public SmallD(String token, Clock clock) {
     this.token = token;
+    this.clock = clock;
 
     try {
       Properties version = new Properties();
@@ -183,7 +190,13 @@ public class SmallD implements AutoCloseable {
       LOG.debug("HTTP Response: [{} {}] {}", code, status, body);
 
       if (response.code() == 429) {
-        throw new HttpException.RateLimitException(code, status, body);
+        String retryAfter = response.header("Retry-After");
+
+        if (retryAfter != null) {
+          throw new RateLimitException(clock.instant().plusMillis(Long.parseLong(retryAfter)));
+        } else {
+          throw new HttpException.ClientException(code, status, body);
+        }
       } else if (response.code() >= 500) {
         throw new HttpException.ServerException(code, status, body);
       } else if (response.code() >= 400) {

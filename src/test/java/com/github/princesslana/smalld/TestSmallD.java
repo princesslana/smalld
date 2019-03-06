@@ -1,5 +1,8 @@
 package com.github.princesslana.smalld;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -189,22 +192,13 @@ public class TestSmallD {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {400, 404, 422, 429, 499})
+  @ValueSource(ints = {400, 404, 422, 499})
   public void get_whenHttp4xx_shouldThrowClientException(int status) {
     server.connect(subject);
 
     server.enqueue(new MockResponse().setResponseCode(status));
 
     Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
-        .isThrownBy(() -> subject.get("/test/url"));
-  }
-
-  @Test
-  public void get_whenHttp429_shouldThrowRateLimitException() {
-    server.connect(subject);
-    server.enqueue(new MockResponse().setResponseCode(429));
-
-    Assertions.assertThatExceptionOfType(HttpException.RateLimitException.class)
         .isThrownBy(() -> subject.get("/test/url"));
   }
 
@@ -217,6 +211,34 @@ public class TestSmallD {
 
     Assertions.assertThatExceptionOfType(HttpException.ServerException.class)
         .isThrownBy(() -> subject.get("/test/url"));
+  }
+
+  @Test
+  public void get_whenHttp429WithNoRetryAfterHeader_shouldThrowClientException() {
+    server.connect(subject);
+    server.enqueue(new MockResponse().setResponseCode(429));
+
+    Assertions.assertThatExceptionOfType(HttpException.ClientException.class)
+        .isThrownBy(() -> subject.get("/test/url"));
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {0, 1, 100})
+  public void get_whenHttp429WithRetryAfterHeader_shouldThrowRateLimitException(int retryAfter) {
+    long now = System.currentTimeMillis();
+
+    SmallD smalld =
+        server.newSmallD(Clock.fixed(Instant.ofEpochMilli(now), ZoneId.systemDefault()));
+
+    server.connect(smalld);
+
+    server.enqueue(new MockResponse().setResponseCode(429).setHeader("Retry-After", retryAfter));
+
+    Throwable thrown = Assertions.catchThrowable(() -> smalld.get("/test/url"));
+
+    Assertions.assertThat(thrown)
+        .isInstanceOf(RateLimitException.class)
+        .hasFieldOrPropertyWithValue("expiry", Instant.ofEpochMilli(now + retryAfter));
   }
 
   @Test

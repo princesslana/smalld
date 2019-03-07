@@ -29,7 +29,6 @@ public class SmallD implements AutoCloseable {
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
   private final String token;
-  private final Clock clock;
 
   private int currentShard = 0;
   private int numberOfShards = 1;
@@ -38,11 +37,7 @@ public class SmallD implements AutoCloseable {
 
   private final String userAgent;
 
-  private final OkHttpClient client =
-      new OkHttpClient.Builder()
-          .addInterceptor(addHeader("Authorization", () -> "Bot " + getToken()))
-          .addInterceptor(addHeader("User-Agent", this::getUserAgent))
-          .build();
+  private final OkHttpClient client;
 
   private final List<Consumer<String>> gatewayPayloadListeners = new ArrayList<>();
 
@@ -58,17 +53,27 @@ public class SmallD implements AutoCloseable {
 
   public SmallD(String token, Clock clock) {
     this.token = token;
-    this.clock = clock;
+    this.userAgent = loadUserAgent();
+    this.client = buildHttpClient(clock);
+  }
 
+  private String loadUserAgent() {
     try {
       Properties version = new Properties();
       version.load(getClass().getResourceAsStream("version.properties"));
-      userAgent =
-          String.format(
-              "DiscordBot (%s, %s)", version.getProperty("url"), version.getProperty("version"));
+      return String.format(
+          "DiscordBot (%s, %s)", version.getProperty("url"), version.getProperty("version"));
     } catch (IOException e) {
       throw new SmallDException(e);
     }
+  }
+
+  private OkHttpClient buildHttpClient(Clock clock) {
+    return new OkHttpClient.Builder()
+        .addInterceptor(new RateLimitInterceptor(clock))
+        .addInterceptor(addHeader("Authorization", () -> "Bot " + getToken()))
+        .addInterceptor(addHeader("User-Agent", this::getUserAgent))
+        .build();
   }
 
   public String getToken() {
@@ -189,15 +194,7 @@ public class SmallD implements AutoCloseable {
 
       LOG.debug("HTTP Response: [{} {}] {}", code, status, body);
 
-      if (response.code() == 429) {
-        String retryAfter = response.header("Retry-After");
-
-        if (retryAfter != null) {
-          throw new RateLimitException(clock.instant().plusMillis(Long.parseLong(retryAfter)));
-        } else {
-          throw new HttpException.ClientException(code, status, body);
-        }
-      } else if (response.code() >= 500) {
+      if (response.code() >= 500) {
         throw new HttpException.ServerException(code, status, body);
       } else if (response.code() >= 400) {
         throw new HttpException.ClientException(code, status, body);

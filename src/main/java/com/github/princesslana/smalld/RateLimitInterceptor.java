@@ -26,20 +26,26 @@ public class RateLimitInterceptor implements Interceptor {
     Response response = chain.proceed(chain.request());
 
     if (response.code() == 429) {
-      String retryAfter = response.header("Retry-After");
+      getRateLimitExpiry(response)
+          .ifPresent(
+              expiryAt -> {
+                if (isGlobalRateLimit(response)) {
+                  globalRateLimitUntil = expiryAt;
+                }
 
-      if (retryAfter != null) {
-        Instant expiryAt = clock.instant().plusMillis(Long.parseLong(retryAfter));
-
-        if (isGlobalRateLimit(response)) {
-          globalRateLimitUntil = expiryAt;
-        }
-
-        throw new RateLimitException(expiryAt);
-      }
+                throw new RateLimitException(expiryAt);
+              });
     }
 
     return response;
+  }
+
+  private Optional<Instant> getRateLimitExpiry(Response response) {
+    return getRetryAfter(response).map(clock.instant()::plusMillis);
+  }
+
+  private Optional<Long> getRetryAfter(Response response) {
+    return Optional.ofNullable(response.header("Retry-After")).map(Long::parseLong);
   }
 
   private boolean isGlobalRateLimit(Response response) {

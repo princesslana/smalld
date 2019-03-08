@@ -28,16 +28,10 @@ public class RateLimitInterceptor implements Interceptor {
     if (response.code() == 429) {
       String retryAfter = response.header("Retry-After");
 
-      boolean isGlobal =
-          Optional.ofNullable(response.header("X-RateLimit-Global"))
-              .map(String::toLowerCase)
-              .map(Boolean::valueOf)
-              .orElse(false);
-
       if (retryAfter != null) {
         Instant expiryAt = clock.instant().plusMillis(Long.parseLong(retryAfter));
 
-        if (isGlobal) {
+        if (isGlobalRateLimit(response)) {
           globalRateLimitUntil = expiryAt;
         }
 
@@ -46,5 +40,12 @@ public class RateLimitInterceptor implements Interceptor {
     }
 
     return response;
+  }
+
+  private boolean isGlobalRateLimit(Response response) {
+    return Optional.ofNullable(response.header("X-RateLimit-Global"))
+        .map(String::toLowerCase)
+        .map(Boolean::valueOf)
+        .orElse(false);
   }
 }

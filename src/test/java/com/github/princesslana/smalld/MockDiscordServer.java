@@ -3,6 +3,8 @@ package com.github.princesslana.smalld;
 import com.eclipsesource.json.Json;
 import java.io.IOException;
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -24,6 +26,14 @@ public class MockDiscordServer implements AutoCloseable {
 
   public SmallD newSmallD() {
     return newSmallD(Clock.systemUTC());
+  }
+
+  public SmallD newSmallDAtNow() {
+    return newSmallDAtMillis(System.currentTimeMillis());
+  }
+
+  public SmallD newSmallDAtMillis(long millis) {
+    return newSmallD(Clock.fixed(Instant.ofEpochMilli(millis), ZoneId.systemDefault()));
   }
 
   public SmallD newSmallD(Clock clock) {
@@ -80,6 +90,10 @@ public class MockDiscordServer implements AutoCloseable {
 
   public void enqueueWebSocketResponse() {
     web.enqueue(new MockResponse().withWebSocketUpgrade(gateway));
+  }
+
+  public int getRequestCount() {
+    return web.getRequestCount();
   }
 
   public RecordedRequest takeRequest() {

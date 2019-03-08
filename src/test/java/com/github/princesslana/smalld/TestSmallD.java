@@ -1,8 +1,6 @@
 package com.github.princesslana.smalld;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -227,18 +225,60 @@ public class TestSmallD {
   public void get_whenHttp429WithRetryAfterHeader_shouldThrowRateLimitException(int retryAfter) {
     long now = System.currentTimeMillis();
 
-    SmallD smalld =
-        server.newSmallD(Clock.fixed(Instant.ofEpochMilli(now), ZoneId.systemDefault()));
+    SmallD smalld = server.newSmallDAtMillis(now);
 
     server.connect(smalld);
 
     server.enqueue(new MockResponse().setResponseCode(429).setHeader("Retry-After", retryAfter));
 
-    Throwable thrown = Assertions.catchThrowable(() -> smalld.get("/test/url"));
-
-    Assertions.assertThat(thrown)
+    Assertions.assertThatThrownBy(() -> smalld.get("/test/url"))
         .isInstanceOf(RateLimitException.class)
         .hasFieldOrPropertyWithValue("expiry", Instant.ofEpochMilli(now + retryAfter));
+  }
+
+  @Test
+  public void get_whenGlobalRateLimited_shouldNotMakeHttpRequest() {
+    SmallD smalld = server.newSmallDAtNow();
+
+    server.connect(smalld);
+
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(429)
+            .setHeader("Retry-After", 1)
+            .setHeader("X-RateLimit-Global", "true"));
+
+    // Make single request to trigger rate limiting
+    Assertions.catchThrowable(() -> smalld.get("/test/url1"));
+
+    int beforeCount = server.getRequestCount();
+
+    Assertions.assertThatThrownBy(() -> smalld.get("/test/url2"))
+        .isInstanceOf(RateLimitException.class);
+
+    Assertions.assertThat(server.getRequestCount()).isEqualTo(beforeCount);
+  }
+
+  @Test
+  public void get_whenRateLimitedButNotGlobal_shouldMakeHttpRequestForDifferentUrl() {
+    SmallD smalld = server.newSmallDAtNow();
+
+    server.connect(smalld);
+
+    server.enqueue(new MockResponse().setResponseCode(429).setHeader("Retry-After", 1));
+
+    server.enqueue(new MockResponse().setResponseCode(200).setBody("response_body"));
+
+    // Make single request to trigger rate limiting
+    Assertions.catchThrowable(() -> smalld.get("/test/url1"));
+    server.takeRequest();
+
+    int beforeCount = server.getRequestCount();
+
+    String response = smalld.get("/test/url2");
+
+    Assertions.assertThat(response).isEqualTo("response_body");
+    Assertions.assertThat(server.getRequestCount()).isEqualTo(beforeCount + 1);
   }
 
   @Test

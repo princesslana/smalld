@@ -259,6 +259,39 @@ public class TestSmallD {
   }
 
   @Test
+  public void get_whenGlobalRateLimitedButExpired_shouldMakeHttpRequest() {
+    MutableClock clock = new MutableClock();
+
+    SmallD smalld = server.newSmallD(clock);
+
+    server.connect(smalld);
+
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(429)
+            .setHeader("Retry-After", 1)
+            .setHeader("X-RateLimit-Global", "true"));
+
+    server.enqueue(new MockResponse().setResponseCode(200).setBody("dummy_body"));
+
+    // Make single request to trigger rate limiting
+    Assertions.catchThrowable(() -> smalld.get("/test/url1"));
+    server.takeRequest();
+
+    clock.plusMillis(100);
+
+    Assertions.assertThatCode(() -> smalld.get("/test/url2")).doesNotThrowAnyException();
+
+    RecordedRequest req = server.takeRequest();
+
+    SoftAssertions.assertSoftly(
+        s -> {
+          s.assertThat(req.getMethod()).isEqualTo("GET");
+          s.assertThat(req.getPath()).isEqualTo("/api/v6/test/url2");
+        });
+  }
+
+  @Test
   public void get_whenRateLimitedButNotGlobal_shouldMakeHttpRequestForDifferentUrl() {
     SmallD smalld = server.newSmallDAtNow();
 

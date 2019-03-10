@@ -251,12 +251,11 @@ public class TestSmallD {
     // Make single request to trigger rate limiting
     Assertions.catchThrowable(() -> smalld.get("/test/url1"));
 
-    int beforeCount = server.getRequestCount();
-
-    Assertions.assertThatThrownBy(() -> smalld.get("/test/url2"))
-        .isInstanceOf(RateLimitException.class);
-
-    Assertions.assertThat(server.getRequestCount()).isEqualTo(beforeCount);
+    assertThatNoServerRequest(
+        () -> {
+          Assertions.assertThatThrownBy(() -> smalld.get("/test/url2"))
+              .isInstanceOf(RateLimitException.class);
+        });
   }
 
   @Test
@@ -279,6 +278,24 @@ public class TestSmallD {
 
     Assertions.assertThat(response).isEqualTo("response_body");
     Assertions.assertThat(server.getRequestCount()).isEqualTo(beforeCount + 1);
+  }
+
+  @Test
+  public void get_whenRateLimited_shouldNotMakeHttpRequest() {
+    SmallD smalld = server.newSmallDAtNow();
+
+    server.connect(smalld);
+
+    server.enqueue(new MockResponse().setResponseCode(429).setHeader("Retry-After", 1));
+
+    // Make single request to trigger rate limiting
+    Assertions.catchThrowable(() -> smalld.get("/test/url1"));
+
+    assertThatNoServerRequest(
+        () -> {
+          Assertions.assertThatThrownBy(() -> smalld.get("/test/url1"))
+              .isInstanceOf(RateLimitException.class);
+        });
   }
 
   @Test
@@ -441,5 +458,13 @@ public class TestSmallD {
     server.enqueueConnect();
 
     Assert.thatNotWithinOneSecond(subject::run);
+  }
+
+  private void assertThatNoServerRequest(Runnable r) {
+    int beforeCount = server.getRequestCount();
+
+    r.run();
+
+    Assertions.assertThat(server.getRequestCount()).isEqualTo(beforeCount);
   }
 }

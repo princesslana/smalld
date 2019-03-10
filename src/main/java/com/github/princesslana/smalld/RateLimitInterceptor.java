@@ -3,15 +3,20 @@ package com.github.princesslana.smalld;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import okhttp3.Interceptor;
+import okhttp3.Request;
 import okhttp3.Response;
 
 public class RateLimitInterceptor implements Interceptor {
 
   private final Clock clock;
 
-  private Instant globalRateLimitUntil = Instant.ofEpochMilli(0);
+  private RateLimit globalRateLimit = RateLimit.allowAll();
+
+  private Map<String, RateLimit> resourceRateLimit = new ConcurrentHashMap();
 
   public RateLimitInterceptor(Clock clock) {
     this.clock = clock;
@@ -19,9 +24,8 @@ public class RateLimitInterceptor implements Interceptor {
 
   @Override
   public Response intercept(Interceptor.Chain chain) throws IOException {
-    if (clock.instant().isBefore(globalRateLimitUntil)) {
-      throw new RateLimitException(globalRateLimitUntil);
-    }
+    globalRateLimit.acquire();
+    getRateLimitForPath(chain.request()).acquire();
 
     Response response = chain.proceed(chain.request());
 
@@ -30,7 +34,9 @@ public class RateLimitInterceptor implements Interceptor {
           .ifPresent(
               expiryAt -> {
                 if (isGlobalRateLimit(response)) {
-                  globalRateLimitUntil = expiryAt;
+                  globalRateLimit = RateLimit.denyUntil(clock, expiryAt);
+                } else {
+                  setRateLimitForPath(chain.request(), RateLimit.denyUntil(clock, expiryAt));
                 }
 
                 throw new RateLimitException(expiryAt);
@@ -38,6 +44,14 @@ public class RateLimitInterceptor implements Interceptor {
     }
 
     return response;
+  }
+
+  private RateLimit getRateLimitForPath(Request request) {
+    return resourceRateLimit.getOrDefault(request.url().encodedPath(), RateLimit.allowAll());
+  }
+
+  private void setRateLimitForPath(Request request, RateLimit rateLimit) {
+    resourceRateLimit.put(request.url().encodedPath(), rateLimit);
   }
 
   private Optional<Instant> getRateLimitExpiry(Response response) {

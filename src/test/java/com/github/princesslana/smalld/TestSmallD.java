@@ -281,12 +281,36 @@ public class TestSmallD {
   }
 
   @Test
-  public void get_whenRateLimited_shouldNotMakeHttpRequest() {
+  public void get_whenRateLimitedBy429_shouldNotMakeHttpRequest() {
     SmallD smalld = server.newSmallDAtNow();
 
     server.connect(smalld);
 
     server.enqueue(new MockResponse().setResponseCode(429).setHeader("Retry-After", 1));
+
+    // Make single request to trigger rate limiting
+    Assertions.catchThrowable(() -> smalld.get("/test/url1"));
+
+    assertThatNoServerRequest(
+        () -> {
+          Assertions.assertThatThrownBy(() -> smalld.get("/test/url1"))
+              .isInstanceOf(RateLimitException.class);
+        });
+  }
+
+  @Test
+  public void get_whenRateLimitedByHeaders_shouldNotMakeHttpRequest() {
+    long now = System.currentTimeMillis();
+
+    SmallD smalld = server.newSmallDAtMillis(now);
+
+    server.connect(smalld);
+
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setHeader("X-RateLimit-Remaining", 0)
+            .setHeader("X-RateLimit-Reset", now + 100));
 
     // Make single request to trigger rate limiting
     Assertions.catchThrowable(() -> smalld.get("/test/url1"));

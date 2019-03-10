@@ -29,6 +29,8 @@ public class RateLimitInterceptor implements Interceptor {
 
     Response response = chain.proceed(chain.request());
 
+    getRateLimit(response).ifPresent(rl -> setRateLimitForPath(chain.request(), rl));
+
     if (response.code() == 429) {
       getRateLimitExpiry(response)
           .ifPresent(
@@ -59,7 +61,7 @@ public class RateLimitInterceptor implements Interceptor {
   }
 
   private Optional<Long> getRetryAfter(Response response) {
-    return Optional.ofNullable(response.header("Retry-After")).map(Long::parseLong);
+    return headerAsLong(response, "Retry-After");
   }
 
   private boolean isGlobalRateLimit(Response response) {
@@ -67,5 +69,17 @@ public class RateLimitInterceptor implements Interceptor {
         .map(String::toLowerCase)
         .map(Boolean::valueOf)
         .orElse(false);
+  }
+
+  private Optional<RateLimit> getRateLimit(Response response) {
+    Optional<Long> remaining = headerAsLong(response, "X-RateLimit-Remaining");
+    Optional<Instant> reset =
+        headerAsLong(response, "X-RateLimit-Reset").map(Instant::ofEpochMilli);
+
+    return remaining.flatMap(rem -> reset.map(res -> new ResourceRateLimit(clock, rem, res)));
+  }
+
+  private Optional<Long> headerAsLong(Response response, String header) {
+    return Optional.ofNullable(response.header(header)).map(Long::parseLong);
   }
 }

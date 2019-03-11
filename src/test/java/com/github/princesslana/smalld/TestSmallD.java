@@ -281,6 +281,34 @@ public class TestSmallD {
   }
 
   @Test
+  public void get_whenGlobalRateLimited_shouldFavorResetOverRetryAfter() {
+    MutableClock clock = new MutableClock();
+
+    SmallD smalld = server.newSmallD(clock);
+
+    server.connect(smalld);
+
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(429)
+            .setHeader("Retry-After", 200)
+            .setHeader("X-RateLimit-Reset", clock.toEpochMilli() + 50)
+            .setHeader("X-RateLimit-Global", "true"));
+
+    server.enqueue(new MockResponse().setResponseCode(200).setBody("dummy_body"));
+
+    makeThrowawayGetRequest(smalld, "/test/url1");
+
+    clock.plusMillis(100);
+
+    Assertions.assertThatCode(() -> smalld.get("/test/url2")).doesNotThrowAnyException();
+
+    RecordedRequest req = server.takeRequest();
+
+    assertThatRequestWas(req, "GET", "/test/url2");
+  }
+
+  @Test
   public void get_whenRateLimitedButNotGlobal_shouldMakeHttpRequestForDifferentUrl() {
     SmallD smalld = server.newSmallDAtNow();
 

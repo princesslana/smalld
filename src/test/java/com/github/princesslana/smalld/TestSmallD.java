@@ -248,14 +248,9 @@ public class TestSmallD {
             .setHeader("Retry-After", 1)
             .setHeader("X-RateLimit-Global", "true"));
 
-    // Make single request to trigger rate limiting
-    Assertions.catchThrowable(() -> smalld.get("/test/url1"));
+    makeThrowawayGetRequest(smalld, "/test/url1");
 
-    assertThatNoServerRequest(
-        () -> {
-          Assertions.assertThatThrownBy(() -> smalld.get("/test/url2"))
-              .isInstanceOf(RateLimitException.class);
-        });
+    assertThrowsRateLimitExceptionBeforeRequest(smalld, "/test/url2");
   }
 
   @Test
@@ -274,9 +269,7 @@ public class TestSmallD {
 
     server.enqueue(new MockResponse().setResponseCode(200).setBody("dummy_body"));
 
-    // Make single request to trigger rate limiting
-    Assertions.catchThrowable(() -> smalld.get("/test/url1"));
-    server.takeRequest();
+    makeThrowawayGetRequest(smalld, "/test/url1");
 
     clock.plusMillis(100);
 
@@ -284,11 +277,7 @@ public class TestSmallD {
 
     RecordedRequest req = server.takeRequest();
 
-    SoftAssertions.assertSoftly(
-        s -> {
-          s.assertThat(req.getMethod()).isEqualTo("GET");
-          s.assertThat(req.getPath()).isEqualTo("/api/v6/test/url2");
-        });
+    assertThatRequestWas(req, "GET", "/test/url2");
   }
 
   @Test
@@ -301,9 +290,7 @@ public class TestSmallD {
 
     server.enqueue(new MockResponse().setResponseCode(200).setBody("response_body"));
 
-    // Make single request to trigger rate limiting
-    Assertions.catchThrowable(() -> smalld.get("/test/url1"));
-    server.takeRequest();
+    makeThrowawayGetRequest(smalld, "/test/url1");
 
     int beforeCount = server.getRequestCount();
 
@@ -321,14 +308,9 @@ public class TestSmallD {
 
     server.enqueue(new MockResponse().setResponseCode(429).setHeader("Retry-After", 1));
 
-    // Make single request to trigger rate limiting
-    Assertions.catchThrowable(() -> smalld.get("/test/url1"));
+    makeThrowawayGetRequest(smalld, "/test/url1");
 
-    assertThatNoServerRequest(
-        () -> {
-          Assertions.assertThatThrownBy(() -> smalld.get("/test/url1"))
-              .isInstanceOf(RateLimitException.class);
-        });
+    assertThrowsRateLimitExceptionBeforeRequest(smalld, "/test/url1");
   }
 
   @Test
@@ -345,14 +327,83 @@ public class TestSmallD {
             .setHeader("X-RateLimit-Remaining", 0)
             .setHeader("X-RateLimit-Reset", now + 100));
 
-    // Make single request to trigger rate limiting
-    Assertions.catchThrowable(() -> smalld.get("/test/url1"));
+    makeThrowawayGetRequest(smalld, "/test/url1");
 
-    assertThatNoServerRequest(
-        () -> {
-          Assertions.assertThatThrownBy(() -> smalld.get("/test/url1"))
-              .isInstanceOf(RateLimitException.class);
-        });
+    assertThrowsRateLimitExceptionBeforeRequest(smalld, "/test/url1");
+  }
+
+  @Test
+  public void get_whenRateLimitHasRemainingRequests_shouldMakeHttpRequest() {
+    MutableClock clock = new MutableClock();
+
+    SmallD smalld = server.newSmallD(clock);
+
+    server.connect(smalld);
+
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setHeader("X-RateLimit-Remaining", 1)
+            .setHeader("X-RateLimit-Reset", clock.toEpochMilli() + 100));
+
+    server.enqueue(new MockResponse().setResponseCode(200).setBody("dummy_body"));
+
+    makeThrowawayGetRequest(smalld, "/test/url1");
+
+    Assertions.assertThatCode(() -> smalld.get("/test/url1")).doesNotThrowAnyException();
+
+    RecordedRequest req = server.takeRequest();
+
+    assertThatRequestWas(req, "GET", "/test/url1");
+  }
+
+  @Test
+  public void get_whenRateLimitExceedsRemainingRequests_shouldMakeHttpRequest() {
+    MutableClock clock = new MutableClock();
+
+    SmallD smalld = server.newSmallD(clock);
+
+    server.connect(smalld);
+
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setHeader("X-RateLimit-Remaining", 1)
+            .setHeader("X-RateLimit-Reset", clock.toEpochMilli() + 100));
+
+    server.enqueue(new MockResponse().setResponseCode(200).setBody("dummy_body"));
+
+    makeThrowawayGetRequest(smalld, "/test/url1");
+    makeThrowawayGetRequest(smalld, "/test/url1");
+
+    assertThrowsRateLimitExceptionBeforeRequest(smalld, "/test/url1");
+  }
+
+  @Test
+  public void get_whenRateLimitAfterReset_shouldMakeHttpRequest() {
+    MutableClock clock = new MutableClock();
+
+    SmallD smalld = server.newSmallD(clock);
+
+    server.connect(smalld);
+
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setHeader("X-RateLimit-Remaining", 0)
+            .setHeader("X-RateLimit-Reset", clock.toEpochMilli() + 1));
+
+    server.enqueue(new MockResponse().setResponseCode(200).setBody("dummy_body"));
+
+    makeThrowawayGetRequest(smalld, "/test/url1");
+
+    clock.plusMillis(100);
+
+    Assertions.assertThatCode(() -> smalld.get("/test/url1")).doesNotThrowAnyException();
+
+    RecordedRequest req = server.takeRequest();
+
+    assertThatRequestWas(req, "GET", "/test/url1");
   }
 
   @Test
@@ -523,5 +574,26 @@ public class TestSmallD {
     r.run();
 
     Assertions.assertThat(server.getRequestCount()).isEqualTo(beforeCount);
+  }
+
+  private void assertThatRequestWas(RecordedRequest req, String method, String path) {
+    SoftAssertions.assertSoftly(
+        s -> {
+          s.assertThat(req.getMethod()).isEqualTo(method);
+          s.assertThat(req.getPath()).isEqualTo("/api/v6" + path);
+        });
+  }
+
+  private void assertThrowsRateLimitExceptionBeforeRequest(SmallD smalld, String path) {
+    assertThatNoServerRequest(
+        () -> {
+          Assertions.assertThatThrownBy(() -> smalld.get(path))
+              .isInstanceOf(RateLimitException.class);
+        });
+  }
+
+  private void makeThrowawayGetRequest(SmallD smalld, String path) {
+    Assertions.catchThrowable(() -> smalld.get(path));
+    server.takeRequest();
   }
 }

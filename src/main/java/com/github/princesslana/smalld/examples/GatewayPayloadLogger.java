@@ -5,7 +5,23 @@ import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.WriterConfig;
 import com.github.princesslana.smalld.SmallD;
 
+/**
+ * A bot that will log all payloads received to a channel.
+ *
+ * <p>Requires two environment variables
+ *
+ * <ul>
+ *   <li><strong>SMALLD_TOKEN</strong> the bot token
+ *   <li><strong>CHANNEL_ID</strong> the id of the channel to log payloads
+ * </ul>
+ */
 public class GatewayPayloadLogger {
+
+  /**
+   * Entrypoint to run the bot.
+   *
+   * @param args command line args
+   */
   public static void main(String[] args) {
     String channel = System.getenv("CHANNEL_ID");
 

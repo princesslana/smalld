@@ -5,10 +5,16 @@ import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import java.util.Optional;
 
+/** Tracks the last seen sequence number. */
 public class SequenceNumber {
 
   private Optional<Long> lastSeen = Optional.empty();
 
+  /**
+   * Construct an instance that will listen to payloads from the given {@link SmallD}.
+   *
+   * @param smalld the {@link SmallD} to listen for payloads from.
+   */
   public SequenceNumber(SmallD smalld) {
     smalld.onGatewayPayload(
         s -> {
@@ -22,6 +28,11 @@ public class SequenceNumber {
         });
   }
 
+  /**
+   * Return the last seen sequence number, if there is one.
+   *
+   * @return the last seen sequence number or {@code empty()} if none
+   */
   public Optional<Long> getLastSeen() {
     return lastSeen;
   }

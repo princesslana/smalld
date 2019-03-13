@@ -1,5 +1,6 @@
 package com.github.princesslana.smalld;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -44,20 +45,20 @@ public class TestSmallD {
 
   @Test
   public void baseUrl_whenNotSetExplicitly_shouldBeDiscordUrl() {
-    SmallD defaultSmallD = new SmallD(MockDiscordServer.TOKEN);
+    SmallD defaultSmallD = new SmallD(MockDiscordServer.TOKEN, Clock.systemUTC());
     Assertions.assertThat(defaultSmallD)
         .hasFieldOrPropertyWithValue("baseUrl", "https://discordapp.com/api/v6");
   }
 
   @Test
   public void currentShard_whenNotSetExplicitly_shouldBeZero() {
-    SmallD defaultSmallD = new SmallD(MockDiscordServer.TOKEN);
+    SmallD defaultSmallD = new SmallD(MockDiscordServer.TOKEN, Clock.systemUTC());
     Assertions.assertThat(defaultSmallD.getCurrentShard()).isEqualTo(0);
   }
 
   @Test
   public void numberOfShards_whenNotSetExplicitly_shouldBeOne() {
-    SmallD defaultSmallD = new SmallD(MockDiscordServer.TOKEN);
+    SmallD defaultSmallD = new SmallD(MockDiscordServer.TOKEN, Clock.systemUTC());
     Assertions.assertThat(defaultSmallD.getNumberOfShards()).isEqualTo(1);
   }
 

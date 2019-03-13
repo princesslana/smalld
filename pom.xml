@@ -182,9 +182,21 @@
           <failsOnError>true</failsOnError>
           <checkstyleRules>
             <module name="Checker">
+              <module name="JavadocPackage"/>
               <module name="TreeWalker">
                 <module name="AvoidStarImport"></module>
                 <module name="NeedBraces"></module>
+                <module name="AtclauseOrder"/>
+                <module name="JavadocType"/>
+                <module name="JavadocMethod">
+                  <property name="scope" value="public"/>
+                  <property name="allowUndeclaredRTE" value="true"/>
+                </module>
+                <module name="JavadocParagraph"/>
+                <module name="JavadocStyle"/>
+                <module name="NonEmptyAtclauseDescription"/>
+                <module name="SingleLineJavadoc"/>
+                <module name="SummaryJavadocCheck"/>
               </module>
             </module>
           </checkstyleRules>

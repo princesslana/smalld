@@ -4,6 +4,10 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import java.util.Optional;
 
+/**
+ * Identifies with the Discord Gateway. When a HELLO event is received it will send an IDENTIFY or
+ * RESUME payload as necessary.
+ */
 public class Identify {
 
   private final SmallD smalld;
@@ -12,6 +16,12 @@ public class Identify {
 
   private Optional<String> sessionId = Optional.empty();
 
+  /**
+   * Constructs an instance that will listen and identify via the provided {@link SmallD}.
+   *
+   * @param smalld the {@link SmallD} to listen and send payloads through
+   * @param sequenceNumber source for obtaining the last seen sequence number
+   */
   public Identify(SmallD smalld, SequenceNumber sequenceNumber) {
     this.smalld = smalld;
     this.sequenceNumber = sequenceNumber;

@@ -11,6 +11,7 @@ import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
 
+/** OkHttp {@link Interceptor} that enforces rate limits on HTTP requests. */
 public class RateLimitInterceptor implements Interceptor {
 
   private final Clock clock;
@@ -19,6 +20,11 @@ public class RateLimitInterceptor implements Interceptor {
 
   private Map<String, RateLimit> resourceRateLimit = new ConcurrentHashMap();
 
+  /**
+   * Constructs an instance using the provided source of time.
+   *
+   * @param clock the clock to fetch the current time from
+   */
   public RateLimitInterceptor(Clock clock) {
     this.clock = clock;
   }

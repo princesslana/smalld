@@ -6,6 +6,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Sends heartbeat payloads to the Discord Gateway. It will begin sending heartbeats after the HELLO
+ * payload is received.
+ */
 public class Heartbeat {
 
   private final ScheduledExecutorService heartbeatExecutor =
@@ -15,6 +19,12 @@ public class Heartbeat {
 
   private final SequenceNumber sequenceNumber;
 
+  /**
+   * Constructs an instance that will send heartbeats via the provided {@link SmallD}.
+   *
+   * @param smalld the {@link SmallD} to send heartbeat paylods through
+   * @param sequenceNumber source from which to retrieve last seen sequence number
+   */
   public Heartbeat(SmallD smalld, SequenceNumber sequenceNumber) {
 
     this.smalld = smalld;

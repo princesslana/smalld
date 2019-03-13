@@ -4,8 +4,14 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.github.princesslana.smalld.SmallD;
 
+/** A bot that will response to a ping message. */
 public class PingBot {
 
+  /**
+   * Entrypoint to run bot.
+   *
+   * @param args command line args
+   */
   public static void main(String[] args) {
     try (SmallD smalld = SmallD.create(System.getenv("SMALLD_TOKEN"))) {
       smalld.onGatewayPayload(

@@ -21,6 +21,22 @@ import okhttp3.WebSocketListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * {@code SmallD} is the entry point for the SmallD API. The methods here can be divided into three
+ * categories: Lifecycle, Gateway, and Resources.
+ *
+ * <p>The Lifecycle methods manage the lifecycle of the connection to Discord. The one that is most
+ * likely required is {@link #run()}. {@link #run()} will connect to Discord and block until the
+ * connection is closed. If greater control of the connection lifecycle is required the other
+ * methods involved in the lifecycle are available to be used as well (e.g., {@link #connect()},
+ * {@link #await()}).
+ *
+ * <p>The Gateway methods allow paylods to be sent to Discord and for execution of listeners upon
+ * receiving a payload.
+ *
+ * <p>The Resource methods allow for sending of requests to Discord's REST API. These are named
+ * after the possible HTTP methods (e.g., {@link #get(String)}).
+ */
 public class SmallD implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SmallD.class);
@@ -47,10 +63,15 @@ public class SmallD implements AutoCloseable {
 
   private WebSocket gatewayWebSocket;
 
-  public SmallD(String token) {
-    this(token, Clock.systemUTC());
-  }
-
+  /**
+   * Construct a {@code SmallD} instance with the provided token and source of time.
+   *
+   * <p>Note that this does not setup any of the default functionality such as identifying,
+   * resuming, etc.
+   *
+   * @param token the token to use to authenticate the bot with Discord
+   * @param clock the clock to use as a source for the current {@link java.time.Instant}
+   */
   public SmallD(String token, Clock clock) {
     this.token = token;
     this.userAgent = loadUserAgent();
@@ -76,23 +97,50 @@ public class SmallD implements AutoCloseable {
         .build();
   }
 
+  /**
+   * Return the Discord bot token that is in use.
+   *
+   * @return the bot token in use
+   */
   public String getToken() {
     return token;
   }
 
+  /**
+   * Return what is configured as the current shard.
+   *
+   * @return the configuration for current shard
+   */
   public int getCurrentShard() {
     return currentShard;
   }
 
+  /**
+   * Return what is configured as the number of shards.
+   *
+   * @return the number of shards configured
+   */
   public int getNumberOfShards() {
     return numberOfShards;
   }
 
+  /**
+   * Configure the current shard and number of shards.
+   *
+   * @param current the current shard
+   * @param number the number of shards
+   */
   public void setShard(int current, int number) {
     this.currentShard = current;
     this.numberOfShards = number;
   }
 
+  /**
+   * Set the base URL to be used for reaching the Discord API. If not set this will default to
+   * {@code https://discordapp.com/api/v6}
+   *
+   * @param baseUrl the base URL to be used to reach the Discord API
+   */
   public void setBaseUrl(String baseUrl) {
     this.baseUrl = baseUrl;
   }
@@ -101,6 +149,7 @@ public class SmallD implements AutoCloseable {
     return userAgent;
   }
 
+  /** Connect to the Discord gateway. */
   public void connect() {
     String gatewayUrl = getGatewayUrl();
 
@@ -123,20 +172,57 @@ public class SmallD implements AutoCloseable {
             });
   }
 
+  /**
+   * Add a listener for payloads received from the Discord gateway.
+   *
+   * @param consumer the listener to be called when a payload is received.
+   */
   public void onGatewayPayload(Consumer<String> consumer) {
     gatewayPayloadListeners.add(consumer);
   }
 
+  /**
+   * Send a payload to the Discord gateway.
+   *
+   * @param text the payload to send
+   */
   public void sendGatewayPayload(String text) {
     LOG.debug("Gateway Send: {}", text);
     gatewayWebSocket.send(text);
   }
 
+  /**
+   * Make a HTTP GET request to a Discord REST endpoint.
+   *
+   * <p>The path provided should start with {@code /} and will be appended to the base URL that has
+   * been configured.
+   *
+   * @param path the path to make the request to
+   * @return the body of the HTTP response
+   * @throws RateLimitException if the request was rate limited
+   * @throws HttpException.ClientException if there was a HTTP 4xx response
+   * @throws HttpException.ServerException is there was a HTTP 5xx response
+   * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   */
   public String get(String path) {
     LOG.debug("HTTP GET {}", path);
     return sendRequest(new Request.Builder().url(baseUrl + path).get().build());
   }
 
+  /**
+   * Make a HTTP POST request to a Discord REST endpoint.
+   *
+   * <p>The request will be send with a content type of application/json. The path provided should
+   * start with {@code /} and will be appended to the base URL that has been configured.
+   *
+   * @param path the path to make the request to
+   * @param payload the body to be sent with the request
+   * @return the body of the HTTP response
+   * @throws RateLimitException if the request was rate limited
+   * @throws HttpException.ClientException if there was a HTTP 4xx response
+   * @throws HttpException.ServerException is there was a HTTP 5xx response
+   * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   */
   public String post(String path, String payload) {
     LOG.debug("HTTP POST {}: {}", path, payload);
 
@@ -146,6 +232,7 @@ public class SmallD implements AutoCloseable {
     return sendRequest(request);
   }
 
+  /** Wait for close. Blocks the current thread until it is. */
   public void await() {
     try {
       closeGate.await();
@@ -154,6 +241,10 @@ public class SmallD implements AutoCloseable {
     }
   }
 
+  /**
+   * Close the connection to Discord. Closes the websocket connection to the gateway and calls all
+   * {@link #onClose} listeners.
+   */
   public void close() {
     if (gatewayWebSocket != null) {
       gatewayWebSocket.close(1000, "Closed.");
@@ -163,10 +254,17 @@ public class SmallD implements AutoCloseable {
     closeGate.countDown();
   }
 
+  /**
+   * Add a listener to be called when closed. It will be called after the Gateway has been
+   * disconnected.
+   *
+   * @param r a {@link Runnable} to be called on close.
+   */
   public void onClose(Runnable r) {
     closeListeners.add(r);
   }
 
+  /** Connect and then await until closed. */
   public void run() {
     connect();
     await();
@@ -212,8 +310,17 @@ public class SmallD implements AutoCloseable {
     return c -> c.proceed(c.request().newBuilder().header(name, valueSupplier.get()).build());
   }
 
+  /**
+   * Creates an instance that will authenticate using the given token.
+   *
+   * <p>{@code create} will construct a SmallD instance and add helpers that will handle identifying
+   * and heartbeating with the Discord gateway.
+   *
+   * @param token the token to authenticate with
+   * @return the created SmallD instance
+   */
   public static SmallD create(String token) {
-    SmallD smalld = new SmallD(token);
+    SmallD smalld = new SmallD(token, Clock.systemUTC());
 
     SequenceNumber seq = new SequenceNumber(smalld);
     new Identify(smalld, seq);

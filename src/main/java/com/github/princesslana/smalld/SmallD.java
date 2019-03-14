@@ -206,7 +206,7 @@ public class SmallD implements AutoCloseable {
    */
   public String get(String path) {
     LOG.debug("HTTP GET {}", path);
-    return sendRequest(new Request.Builder().url(baseUrl + path).get().build());
+    return sendRequest(requestBuilder(path).get().build());
   }
 
   /**
@@ -226,8 +226,29 @@ public class SmallD implements AutoCloseable {
   public String post(String path, String payload) {
     LOG.debug("HTTP POST {}: {}", path, payload);
 
-    Request request =
-        new Request.Builder().url(baseUrl + path).post(RequestBody.create(JSON, payload)).build();
+    Request request = requestBuilder(path).post(jsonBody(payload)).build();
+
+    return sendRequest(request);
+  }
+
+  /**
+   * Make a HTTP PUT request to a Discord REST endpoint.
+   *
+   * <p>The request will be send with a content type of application/json. The path provided should
+   * start with {@code /} and will be appended to the base URL that has been configured.
+   *
+   * @param path the path to make the request to
+   * @param payload the body to be sent with the request
+   * @return the body of the HTTP response
+   * @throws RateLimitException if the request was rate limited
+   * @throws HttpException.ClientException if there was a HTTP 4xx response
+   * @throws HttpException.ServerException is there was a HTTP 5xx response
+   * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   */
+  public String put(String path, String payload) {
+    LOG.debug("HTTP PUT {}: {}", path, payload);
+
+    Request request = requestBuilder(path).put(jsonBody(payload)).build();
 
     return sendRequest(request);
   }
@@ -282,6 +303,14 @@ public class SmallD implements AutoCloseable {
     } catch (ParseException e) {
       throw new SmallDException(e);
     }
+  }
+
+  private Request.Builder requestBuilder(String path) {
+    return new Request.Builder().url(baseUrl + path);
+  }
+
+  private RequestBody jsonBody(String content) {
+    return RequestBody.create(JSON, content);
   }
 
   private String sendRequest(Request request) {

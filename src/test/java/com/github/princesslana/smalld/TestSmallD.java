@@ -474,12 +474,8 @@ public class TestSmallD {
 
     RecordedRequest req = server.takeRequest();
 
-    SoftAssertions.assertSoftly(
-        s -> {
-          s.assertThat(req.getMethod()).isEqualTo("POST");
-          s.assertThat(req.getPath()).isEqualTo("/api/v6/test/url");
-          s.assertThat(req.getBody().readUtf8()).isEqualTo(payload);
-        });
+    assertThatRequestWas(req, "POST", "/test/url");
+    Assertions.assertThat(req.getBody().readUtf8()).isEqualTo(payload);
   }
 
   @Test
@@ -507,6 +503,35 @@ public class TestSmallD {
 
     Assertions.assertThat(req.getHeader("Authorization"))
         .isEqualTo("Bot " + MockDiscordServer.TOKEN);
+  }
+
+  @Test
+  public void put_shouldPutPayloadToEndpoint() {
+    String payload = "TEST PAYLOAD";
+
+    server.connect(subject);
+
+    server.enqueue("");
+
+    subject.put("/test/url", payload);
+
+    RecordedRequest req = server.takeRequest();
+
+    assertThatRequestWas(req, "PUT", "/test/url");
+    Assertions.assertThat(req.getBody().readUtf8()).isEqualTo(payload);
+  }
+
+  @Test
+  public void put_shouldReturnResponseOn200() {
+    String expected = "TEST RESPONSE";
+
+    server.connect(subject);
+
+    server.enqueue(expected);
+
+    String actual = subject.put("/test/url", "");
+
+    Assertions.assertThat(actual).isEqualTo(expected);
   }
 
   @Test

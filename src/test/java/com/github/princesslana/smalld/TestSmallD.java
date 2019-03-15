@@ -488,7 +488,7 @@ public class TestSmallD {
   }
 
   @Test
-  public void patch_shouldPutPayloadToEndpoint() {
+  public void patch_shouldPatchPayloadToEndpoint() {
     assertSendsPayloadToEndpoint("PATCH", SmallD::patch);
   }
 
@@ -509,6 +509,19 @@ public class TestSmallD {
 
     Assertions.assertThat(req.getHeader("Authorization"))
         .isEqualTo("Bot " + MockDiscordServer.TOKEN);
+  }
+
+  @Test
+  public void delete_shouldDeleteToEndpoint() {
+    server.connect(subject);
+
+    server.enqueue("");
+
+    subject.delete("/test/url");
+
+    RecordedRequest req = server.takeRequest();
+
+    assertThatRequestWas(req, "DELETE", "/test/url");
   }
 
   @Test

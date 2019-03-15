@@ -463,32 +463,38 @@ public class TestSmallD {
   }
 
   @Test
+  public void get_shouldReturnResponseOn200() {
+    assertReturnsResponseOn200((s, path, payload) -> s.get(path));
+  }
+
+  @Test
   public void post_shouldPostPayloadToEndpoint() {
-    String payload = "TEST PAYLOAD";
-
-    server.connect(subject);
-
-    server.enqueue("");
-
-    subject.post("/test/url", payload);
-
-    RecordedRequest req = server.takeRequest();
-
-    assertThatRequestWas(req, "POST", "/test/url");
-    Assertions.assertThat(req.getBody().readUtf8()).isEqualTo(payload);
+    assertSendsPayloadToEndpoint("POST", SmallD::post);
   }
 
   @Test
   public void post_shouldReturnResponseOn200() {
-    String expected = "TEST RESPONSE";
+    assertReturnsResponseOn200(SmallD::post);
+  }
 
-    server.connect(subject);
+  @Test
+  public void put_shouldPutPayloadToEndpoint() {
+    assertSendsPayloadToEndpoint("PUT", SmallD::put);
+  }
 
-    server.enqueue(expected);
+  @Test
+  public void put_shouldReturnResponseOn200() {
+    assertReturnsResponseOn200(SmallD::put);
+  }
 
-    String actual = subject.post("/test/url", "");
+  @Test
+  public void patch_shouldPutPayloadToEndpoint() {
+    assertSendsPayloadToEndpoint("PATCH", SmallD::patch);
+  }
 
-    Assertions.assertThat(actual).isEqualTo(expected);
+  @Test
+  public void patch_shouldReturnResponseOn200() {
+    assertReturnsResponseOn200(SmallD::patch);
   }
 
   @Test
@@ -503,35 +509,6 @@ public class TestSmallD {
 
     Assertions.assertThat(req.getHeader("Authorization"))
         .isEqualTo("Bot " + MockDiscordServer.TOKEN);
-  }
-
-  @Test
-  public void put_shouldPutPayloadToEndpoint() {
-    String payload = "TEST PAYLOAD";
-
-    server.connect(subject);
-
-    server.enqueue("");
-
-    subject.put("/test/url", payload);
-
-    RecordedRequest req = server.takeRequest();
-
-    assertThatRequestWas(req, "PUT", "/test/url");
-    Assertions.assertThat(req.getBody().readUtf8()).isEqualTo(payload);
-  }
-
-  @Test
-  public void put_shouldReturnResponseOn200() {
-    String expected = "TEST RESPONSE";
-
-    server.connect(subject);
-
-    server.enqueue(expected);
-
-    String actual = subject.put("/test/url", "");
-
-    Assertions.assertThat(actual).isEqualTo(expected);
   }
 
   @Test
@@ -649,5 +626,32 @@ public class TestSmallD {
   private void makeThrowawayGetRequest(SmallD smalld, String path) {
     Assertions.catchThrowable(() -> smalld.get(path));
     server.takeRequest();
+  }
+
+  private void assertSendsPayloadToEndpoint(String method, HttpMethodExecutor exec) {
+    server.connect(subject);
+    server.enqueue("");
+
+    String payload = "TEST PAYLOAD";
+    exec.doRequest(subject, "/test/url", payload);
+
+    RecordedRequest req = server.takeRequest();
+
+    assertThatRequestWas(req, method, "/test/url");
+    Assertions.assertThat(req.getBody().readUtf8()).isEqualTo(payload);
+  }
+
+  public void assertReturnsResponseOn200(HttpMethodExecutor exec) {
+    server.connect(subject);
+
+    String expected = "TEST RESPONSE";
+    server.enqueue(expected);
+
+    String actual = exec.doRequest(subject, "/test/url", "");
+    Assertions.assertThat(actual).isEqualTo(expected);
+  }
+
+  private static interface HttpMethodExecutor {
+    String doRequest(SmallD subject, String method, String url);
   }
 }

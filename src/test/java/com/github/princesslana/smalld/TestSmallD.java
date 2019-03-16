@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import okhttp3.MediaType;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -473,6 +474,12 @@ public class TestSmallD {
   }
 
   @Test
+  public void post_whenMultipart_shouldReturnResponseOn200() {
+    assertReturnsResponseOn200(
+        (s, path, payload) -> s.post(path, payload, new Attachment("", null, new byte[] {})));
+  }
+
+  @Test
   public void post_shouldReturnResponseOn200() {
     assertReturnsResponseOn200(SmallD::post);
   }
@@ -512,6 +519,30 @@ public class TestSmallD {
   }
 
   @Test
+  public void post_whenMultipart_shouldSendRequest() {
+    server.connect(subject);
+
+    server.enqueue("");
+
+    subject.post("/test/url", "", new Attachment("", null, new byte[] {}));
+
+    RecordedRequest req = server.takeRequest();
+    assertThatRequestWas(req, "POST", "/test/url");
+  }
+
+  @Test
+  public void post_whenBytesAttachment_shouldSendMultipartBody() {
+    assertThatMultipartSendsBody(
+        new Attachment("abc", MediaType.get("text/plain"), "xyz".getBytes()));
+  }
+
+  @Test
+  public void post_whenUrlAttachment_shouldSendMultipartBody() {
+    assertThatMultipartSendsBody(
+        new Attachment(
+            "abc", MediaType.get("text/plain"), getClass().getResource("multipart_input.txt")));
+  }
+
   public void delete_shouldDeleteToEndpoint() {
     server.connect(subject);
 
@@ -662,6 +693,26 @@ public class TestSmallD {
 
     String actual = exec.doRequest(subject, "/test/url", "");
     Assertions.assertThat(actual).isEqualTo(expected);
+  }
+
+  private void assertThatMultipartSendsBody(Attachment attachment) {
+    server.connect(subject);
+
+    server.enqueue("");
+
+    subject.post("/test/url", "test_payload", attachment);
+
+    RecordedRequest req = server.takeRequest();
+
+    String body = req.getBody().readUtf8();
+
+    Assertions.assertThat(body).contains("test_payload").contains("name=\"payload_json\"");
+
+    Assertions.assertThat(body)
+        .contains("text/plain")
+        .contains("name=\"file\"")
+        .contains("filename=\"abc\"")
+        .contains("xyz");
   }
 
   private static interface HttpMethodExecutor {

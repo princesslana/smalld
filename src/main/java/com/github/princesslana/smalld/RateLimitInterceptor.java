@@ -18,7 +18,7 @@ public class RateLimitInterceptor implements Interceptor {
 
   private RateLimit globalRateLimit = RateLimit.allowAll();
 
-  private Map<String, RateLimit> resourceRateLimit = new ConcurrentHashMap();
+  private Map<String, RateLimit> resourceRateLimit = new ConcurrentHashMap<>();
 
   /**
    * Constructs an instance using the provided source of time.

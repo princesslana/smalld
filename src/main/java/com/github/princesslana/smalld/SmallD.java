@@ -232,21 +232,25 @@ public class SmallD implements AutoCloseable {
   public String post(String path, String payload, Attachment... attachments) {
     LOG.debug("HTTP POST {}: {}", path, payload);
 
-    if (attachments.length == 0) {
-      return sendRequest(path, b -> b.post(jsonBody(payload)));
-    } else {
-      MultipartBody.Builder builder =
-          new MultipartBody.Builder()
-              .setType(MultipartBody.FORM)
-              .addFormDataPart("payload_json", payload);
+    boolean isMultipart = attachments.length > 0;
 
-      for (Attachment a : attachments) {
-        builder.addFormDataPart(
-            "file", a.getFilename(), RequestBody.create(a.getMediaType(), a.getBytes()));
-      }
+    return isMultipart
+        ? postMultipart(path, payload, attachments)
+        : sendRequest(path, b -> b.post(jsonBody(payload)));
+  }
 
-      return sendRequest(path, b -> b.post(builder.build()));
+  private String postMultipart(String path, String payload, Attachment... attachments) {
+    MultipartBody.Builder builder =
+        new MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("payload_json", payload);
+
+    for (Attachment a : attachments) {
+      builder.addFormDataPart(
+          "file", a.getFilename(), RequestBody.create(a.getMediaType(), a.getBytes()));
     }
+
+    return sendRequest(path, b -> b.post(builder.build()));
   }
 
   /**

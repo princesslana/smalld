@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -212,23 +213,40 @@ public class SmallD implements AutoCloseable {
   }
 
   /**
-   * Make a HTTP POST request to a Discord REST endpoint.
+   * Make a HTTP POST request to a Discord REST endpoint. The path provided should start with {@code
+   * /} and will be appended to the base URL that has been configured.
    *
-   * <p>The request will be send with a content type of application/json. The path provided should
-   * start with {@code /} and will be appended to the base URL that has been configured.
+   * <p>If no attachments are provided the request will be send with a content type of
+   * application/json. If attachments are present the content type will be multipart/form-data and
+   * the json payload is included in the part named {@code payload_json}.
    *
    * @param path the path to make the request to
    * @param payload the body to be sent with the request
+   * @param attachments attachments for a multipart request
    * @return the body of the HTTP response
    * @throws RateLimitException if the request was rate limited
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
    */
-  public String post(String path, String payload) {
+  public String post(String path, String payload, Attachment... attachments) {
     LOG.debug("HTTP POST {}: {}", path, payload);
 
-    return sendRequest(path, b -> b.post(jsonBody(payload)));
+    if (attachments.length == 0) {
+      return sendRequest(path, b -> b.post(jsonBody(payload)));
+    } else {
+      MultipartBody.Builder builder =
+          new MultipartBody.Builder()
+              .setType(MultipartBody.FORM)
+              .addFormDataPart("payload_json", payload);
+
+      for (Attachment a : attachments) {
+        builder.addFormDataPart(
+            "file", a.getFilename(), RequestBody.create(a.getMediaType(), a.getBytes()));
+      }
+
+      return sendRequest(path, b -> b.post(builder.build()));
+    }
   }
 
   /**

@@ -95,15 +95,13 @@ public class Attachment {
    * @return the content
    */
   public byte[] getBytes() {
-    Buffer buffer = new Buffer();
-
-    try (InputStream is = stream.get()) {
+    try (Buffer buffer = new Buffer();
+        InputStream is = stream.get()) {
       buffer.readFrom(is);
+      return buffer.readByteArray();
     } catch (IOException e) {
       throw new SmallDException(e);
     }
-
-    return buffer.readByteArray();
   }
 
   private static Supplier<InputStream> supplyFrom(Callable<InputStream> c) {

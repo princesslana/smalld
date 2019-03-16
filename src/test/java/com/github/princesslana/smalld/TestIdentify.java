@@ -1,11 +1,9 @@
 package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import okhttp3.Response;
 import okhttp3.WebSocket;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -139,10 +137,19 @@ public class TestIdentify {
                     .add("d", Json.object().add("session_id", "xyz789"))
                     .toString());
 
-    server.gateway().onOpen(SEND_READY.andThen(sendNonReadySessionId));
+    server.gateway().onOpen(SEND_READY.andThen(sendNonReadySessionId).andThen(SEND_HELLO));
 
     server.connect(smalld);
 
-    Assertions.assertThat(subject).hasFieldOrPropertyWithValue("sessionId", Optional.of("abc123"));
+    Assert.thatWithinOneSecond(
+        () ->
+            server
+                .gateway()
+                .assertJsonMessage()
+                .and(
+                    j -> j.node("op").isEqualTo(6),
+                    j -> j.node("d.token").isEqualTo(MockDiscordServer.TOKEN),
+                    j -> j.node("d.session_id").isEqualTo("abc123"),
+                    j -> j.node("d.seq").isEqualTo(1)));
   }
 }

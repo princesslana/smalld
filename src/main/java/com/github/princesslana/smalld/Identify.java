@@ -2,6 +2,7 @@ package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.JsonValue;
 import java.util.Optional;
 
 /**
@@ -34,7 +35,9 @@ public class Identify {
             onHello();
           }
 
-          if (p.getString("t", "").equals("READY")) {
+          JsonValue t = p.get("t");
+
+          if (t != null && t.isString() && t.asString().equals("READY")) {
             onReady(p.get("d").asObject());
           }
         });

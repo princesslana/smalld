@@ -20,7 +20,7 @@ public class TestIdentify {
       (ws, r) -> ws.send(Json.object().add("op", 1).add("s", Json.NULL).toString());
 
   private static final BiConsumer<WebSocket, Response> SEND_HELLO =
-      (ws, r) -> ws.send(Json.object().add("op", 10).toString());
+      (ws, r) -> ws.send(Json.object().add("op", 10).add("t", Json.NULL).toString());
 
   private static final BiConsumer<WebSocket, Response> SEND_READY =
       (ws, r) ->
@@ -92,7 +92,7 @@ public class TestIdentify {
   }
 
   @Test
-  public void subject_whenSequenceReceivedBeforeSessoinId_shouldSendIdentify() {
+  public void subject_whenSequenceReceivedBeforeSessionId_shouldSendIdentify() {
     BiConsumer<WebSocket, Response> sendWithSequence =
         (ws, r) -> ws.send(Json.object().add("op", 0).add("s", 1).toString());
 
@@ -123,5 +123,33 @@ public class TestIdentify {
     server.connect(smalld);
 
     Assert.thatNotWithinOneSecond(() -> server.gateway().assertThatNext().isNotNull());
+  }
+
+  @Test
+  public void subject_whenNonReadyReceived_shouldIgnoreSessionId() {
+    BiConsumer<WebSocket, Response> sendNonReadySessionId =
+        (ws, r) ->
+            ws.send(
+                Json.object()
+                    .add("op", 0)
+                    .add("s", 1)
+                    .add("t", "OTHER")
+                    .add("d", Json.object().add("session_id", "xyz789"))
+                    .toString());
+
+    server.gateway().onOpen(SEND_READY.andThen(sendNonReadySessionId).andThen(SEND_HELLO));
+
+    server.connect(smalld);
+
+    Assert.thatWithinOneSecond(
+        () ->
+            server
+                .gateway()
+                .assertJsonMessage()
+                .and(
+                    j -> j.node("op").isEqualTo(6),
+                    j -> j.node("d.token").isEqualTo(MockDiscordServer.TOKEN),
+                    j -> j.node("d.session_id").isEqualTo("abc123"),
+                    j -> j.node("d.seq").isEqualTo(1)));
   }
 }

@@ -1,9 +1,11 @@
 package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import okhttp3.Response;
 import okhttp3.WebSocket;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +22,7 @@ public class TestIdentify {
       (ws, r) -> ws.send(Json.object().add("op", 1).add("s", Json.NULL).toString());
 
   private static final BiConsumer<WebSocket, Response> SEND_HELLO =
-      (ws, r) -> ws.send(Json.object().add("op", 10).toString());
+      (ws, r) -> ws.send(Json.object().add("op", 10).add("t", Json.NULL).toString());
 
   private static final BiConsumer<WebSocket, Response> SEND_READY =
       (ws, r) ->
@@ -92,7 +94,7 @@ public class TestIdentify {
   }
 
   @Test
-  public void subject_whenSequenceReceivedBeforeSessoinId_shouldSendIdentify() {
+  public void subject_whenSequenceReceivedBeforeSessionId_shouldSendIdentify() {
     BiConsumer<WebSocket, Response> sendWithSequence =
         (ws, r) -> ws.send(Json.object().add("op", 0).add("s", 1).toString());
 
@@ -123,5 +125,24 @@ public class TestIdentify {
     server.connect(smalld);
 
     Assert.thatNotWithinOneSecond(() -> server.gateway().assertThatNext().isNotNull());
+  }
+
+  @Test
+  public void subject_whenNonReadyReceived_shouldIgnoreSessionId() {
+    BiConsumer<WebSocket, Response> sendNonReadySessionId =
+        (ws, r) ->
+            ws.send(
+                Json.object()
+                    .add("op", 0)
+                    .add("s", 1)
+                    .add("t", "OTHER")
+                    .add("d", Json.object().add("session_id", "xyz789"))
+                    .toString());
+
+    server.gateway().onOpen(SEND_READY.andThen(sendNonReadySessionId));
+
+    server.connect(smalld);
+
+    Assertions.assertThat(subject).hasFieldOrPropertyWithValue("sessionId", Optional.of("abc123"));
   }
 }

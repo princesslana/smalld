@@ -54,10 +54,10 @@ public class CatBot {
     smalld.post(
         "/channels/" + channelId + "/messages",
         "",
-        new Attachment("cat.jpg", MediaType.get("image/jpeg"), getCatUrl(smalld)));
+        new Attachment("cat.jpg", MediaType.get("image/jpeg"), getCatUrl()));
   }
 
-  private static URL getCatUrl(SmallD smalld) {
+  private static URL getCatUrl() {
     try {
       Response response = OK_HTTP.newCall(CAT_REQUEST).execute();
 

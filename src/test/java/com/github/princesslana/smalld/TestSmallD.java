@@ -495,7 +495,7 @@ public class TestSmallD {
   }
 
   @Test
-  public void patch_shouldPutPayloadToEndpoint() {
+  public void patch_shouldPatchPayloadToEndpoint() {
     assertSendsPayloadToEndpoint("PATCH", SmallD::patch);
   }
 
@@ -541,6 +541,18 @@ public class TestSmallD {
     assertThatMultipartSendsBody(
         new Attachment(
             "abc", MediaType.get("text/plain"), getClass().getResource("multipart_input.txt")));
+  }
+
+  public void delete_shouldDeleteToEndpoint() {
+    server.connect(subject);
+
+    server.enqueue("");
+
+    subject.delete("/test/url");
+
+    RecordedRequest req = server.takeRequest();
+
+    assertThatRequestWas(req, "DELETE", "/test/url");
   }
 
   @Test

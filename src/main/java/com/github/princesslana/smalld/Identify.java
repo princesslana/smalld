@@ -34,7 +34,7 @@ public class Identify {
             onHello();
           }
 
-          if (p.getString("t", "").equals("READY")) {
+          if (p.get("t").isString() && p.getString("t", "").equals("READY")) {
             onReady(p.get("d").asObject());
           }
         });

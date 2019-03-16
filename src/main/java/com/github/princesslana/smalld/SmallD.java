@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -367,7 +367,7 @@ public class SmallD implements AutoCloseable {
     return RequestBody.create(JSON, content);
   }
 
-  private String sendRequest(String path, Function<Request.Builder, Request.Builder> build) {
+  private String sendRequest(String path, UnaryOperator<Request.Builder> build) {
     Request.Builder builder = new Request.Builder().url(baseUrl + path);
 
     return sendRequest(build.apply(builder).build());

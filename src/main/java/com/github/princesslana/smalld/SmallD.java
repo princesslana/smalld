@@ -271,6 +271,24 @@ public class SmallD implements AutoCloseable {
     return sendRequest(path, b -> b.patch(jsonBody(payload)));
   }
 
+  /**
+   * Make a HTTP DELETE request to a Discord REST endpoint.
+   *
+   * <p>The request will be send with a content type of application/json. The path provided should
+   * start with {@code /} and will be appended to the base URL that has been configured.
+   *
+   * @param path the path to make the request to
+   * @throws RateLimitException if the request was rate limited
+   * @throws HttpException.ClientException if there was a HTTP 4xx response
+   * @throws HttpException.ServerException is there was a HTTP 5xx response
+   * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   */
+  public void delete(String path) {
+    LOG.debug("HTTP DELETE {}", path);
+
+    sendRequest(path, Request.Builder::delete);
+  }
+
   /** Wait for close. Blocks the current thread until it is. */
   public void await() {
     try {

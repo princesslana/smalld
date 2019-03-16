@@ -129,7 +129,7 @@ workflows:
           filters:
             branches:
               only: master
-      - release:
+      - deploy_release:
           requires:
             - java8
             - java11

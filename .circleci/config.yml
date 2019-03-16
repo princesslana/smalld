@@ -95,16 +95,28 @@ workflows:
   version: 2
   build:
     jobs:
-      - dependency_cache
+      - dependency_cache:
+          filters:
+            tags:
+              only: /.*/
       - java8:
           requires:
             - dependency_cache
+          filters:
+            tags:
+              only: /.*/
       - java11:
           requires:
             - dependency_cache
+          filters:
+            tags:
+              only: /.*/
       - corretto8:
           requires:
             - dependency_cache
+          filters:
+            tags:
+              only: /.*/
       - sonarcloud:
           requires:
             - java8

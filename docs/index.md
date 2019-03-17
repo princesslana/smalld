@@ -1,0 +1,64 @@
+# SmallD
+
+SmallD is a minimalist Java library for making [Discord](https://discordapp.com) bots.
+It doesn't aim to hide the Discord API from the developer, but instead to expose it for
+use in a convenient way.
+SmallD takes care of the just the necessities of communicating with the Discord API, leaving
+a large amount of flexibility in the developer's hands.
+
+Features considered in scope:
+* Authentication, Identifying, Resuming
+* Hearbeat
+* Rate Limiting
+
+Features considered out of scope:
+* Serialization or deserialization os JSON messages/payloads
+* Caching
+
+
+## Usage
+
+If you wish to jump right in check out the [Getting Started](getting_started.html) guide.
+
+For reference there's the [Javadocs](https://www.javadoc.io/doc/com.github.princesslana/smalld) and
+always keep the [Discord Developer Documentation](https://discordapp.com/developers/docs/intro) handy.
+
+If you just want to add it to your project right now SmallD is published to maven central.
+So, it can be added with Maven or Gradle as below.
+
+### Maven
+
+```xml
+  <dependency>
+    <groupId>com.github.princesslana</groupId>
+    <artifactId>smalld</artifactId>
+    <version>{{ site.github.latest_version.name }}</version>
+  </dependency>
+```
+
+### Gradle
+
+```groovy
+compile 'com.github.princesslana:smalld:{{ site.github.latest_version.name }}'
+```
+
+## Examples
+
+There are example bots included in the github repository
+[here.](https://github.com/princesslana/smalld/tree/master/src/main/java/com/github/princesslana/smalld/examples)
+To run these you will need to setup your bot token in the `SMALLD_TOKEN` environment variable.
+Then:
+
+```bash
+$ mvn compile exec:java -Dexec.mainClass=com.github.princesslana.smalld.examples.<classname>
+```
+
+For example, to run PingBot:
+
+```bash
+$ mvn compile exec:java -Dexec.mainClass=com.github.princesslana.smalld.examples.PingBot
+```
+
+## Contributing
+
+Head over to the [GitHub](https://github.com/princesslana/smalld).

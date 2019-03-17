@@ -19,7 +19,8 @@ Be prepared to answer questions or respond to comments on your changes, and be p
 If you wish to **update documentation** use the same process as for submitting a fix or feature, as all the documentation is generated from the repository also.
 
 If you wish to **develop a library or wrapper for another programming language** based on SmallD then please reach out to the contact details at the end of this doc.
-We may have some advice or comments, but of course you're welcome to develop your great idea on your own, we'd be excited to hear about it.
+We may have some advice or comments, or maybe we can connect you with someone working on a simlar idea.
+Of course we don't want to stop you from working on your great idea, so you're always welcome to ignore us and build something using SmallD, we'd still love to hear about it.
 
 ## Contacting the community
 

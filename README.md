@@ -17,6 +17,9 @@ Features considered out of scope:
 * Caching
 
 ## Usage
+
+Also see https://princesslana.github.io/smalld.
+
 **Latest Release:** 
 ![Maven Central](https://img.shields.io/maven-central/v/com.github.princesslana/smalld.svg)
 [![Javadocs](http://javadoc.io/badge/com.github.princesslana/smalld.svg)](http://javadoc.io/doc/com.github.princesslana/smalld)
@@ -50,3 +53,23 @@ Add the dependency:
     <version>master-SNAPSHOT</version>
   </dependency>
 ```
+
+## Development
+
+See the [contributing guide](CONTRIBUTING.md).
+
+To run the junit tests:
+```bash
+$ mvn test
+```
+
+To run the code formatter:
+```bash
+$ mvn spotless:apply
+```
+
+To run the full set of verifications (including test coverage and style checks):
+```bash
+$ mvn verify
+```
+

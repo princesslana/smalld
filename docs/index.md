@@ -25,6 +25,8 @@ always keep the [Discord Developer Documentation](https://discordapp.com/develop
 
 If you just want to add it to your project right now SmallD is published to maven central.
 So, it can be added with Maven or Gradle as below.
+Replace `VERSION` with the version you wish to use.
+The latest version is: ![Maven Central](https://img.shields.io/maven-central/v/com.github.princesslana/smalld.svg)
 
 ### Maven
 
@@ -32,14 +34,14 @@ So, it can be added with Maven or Gradle as below.
   <dependency>
     <groupId>com.github.princesslana</groupId>
     <artifactId>smalld</artifactId>
-    <version>{{ site.github.latest_version.name }}</version>
+    <version>VERSION</version>
   </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-compile 'com.github.princesslana:smalld:{{ site.github.latest_version.name }}'
+compile 'com.github.princesslana:smalld:VERSION'
 ```
 
 ## Examples

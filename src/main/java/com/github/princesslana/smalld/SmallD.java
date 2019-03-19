@@ -160,18 +160,14 @@ public class SmallD implements AutoCloseable {
     gatewayWebSocket =
         client.newWebSocket(
             request,
-            new WebSocketListener() {
-              @Override
-              public void onMessage(WebSocket ws, String text) {
-                LOG.debug("Gateway Receive: {}", text);
-                gatewayPayloadListeners.forEach(l -> l.accept(text));
-              }
-
-              @Override
-              public void onFailure(WebSocket ws, Throwable t, Response response) {
-                LOG.debug("onFailure: {}", response, t);
-              }
-            });
+            new LoggingWebSocketListener(
+                LOG,
+                new WebSocketListener() {
+                  @Override
+                  public void onMessage(WebSocket ws, String text) {
+                    gatewayPayloadListeners.forEach(l -> l.accept(text));
+                  }
+                }));
   }
 
   /**

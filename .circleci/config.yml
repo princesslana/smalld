@@ -40,6 +40,10 @@ jobs:
     <<: *build
     docker:
       - image: maven:3-jdk-11
+  java12:
+    <<: *build
+    docker:
+      - image: maven:3-jdk-12
   corretto8:
     <<: *build
     docker:
@@ -111,6 +115,12 @@ workflows:
           filters:
             tags:
               only: /.*/
+      - java12:
+          requires:
+            - dependency_cache
+          filters:
+            tags:
+              only: /.*/
       - corretto8:
           requires:
             - dependency_cache
@@ -133,6 +143,7 @@ workflows:
           requires:
             - java8
             - java11
+            - java12
             - corretto8
           filters:
             branches:

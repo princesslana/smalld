@@ -2,6 +2,7 @@ package com.github.princesslana.smalld;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -240,13 +241,17 @@ public class TestSmallD {
 
   @Test
   public void get_whenGlobalRateLimited_shouldNotMakeHttpRequest() {
-    SmallD smalld = server.newSmallDAtNow();
+    String date = "Tue, 3 Jun 2008 11:05:30 GMT";
+    Instant now = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(date));
+
+    SmallD smalld = server.newSmallDAtMillis(now.toEpochMilli());
 
     server.connect(smalld);
 
     server.enqueue(
         new MockResponse()
             .setResponseCode(429)
+            .setHeader("Date", date)
             .setHeader("Retry-After", 1)
             .setHeader("X-RateLimit-Global", "true"));
 
@@ -332,11 +337,18 @@ public class TestSmallD {
 
   @Test
   public void get_whenRateLimitedBy429_shouldNotMakeHttpRequest() {
-    SmallD smalld = server.newSmallDAtNow();
+    String date = "Tue, 3 Jun 2008 11:05:30 GMT";
+    Instant now = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(date));
+
+    SmallD smalld = server.newSmallDAtMillis(now.toEpochMilli());
 
     server.connect(smalld);
 
-    server.enqueue(new MockResponse().setResponseCode(429).setHeader("Retry-After", 1));
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(429)
+            .setHeader("Date", date)
+            .setHeader("Retry-After", 1));
 
     makeThrowawayGetRequest(smalld, "/test/url1");
 

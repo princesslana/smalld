@@ -3,6 +3,7 @@ package com.github.princesslana.smalld;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,7 +66,14 @@ public class RateLimitInterceptor implements Interceptor {
 
   private Optional<Instant> getRateLimitExpiry(Response response) {
     Optional<Instant> reset = getRateLimitReset(response);
-    Optional<Instant> retryAfter = getRetryAfter(response).map(clock.instant()::plusMillis);
+
+    Optional<Instant> responseDate =
+        Optional.ofNullable(response.header("Date"))
+            .map(DateTimeFormatter.RFC_1123_DATE_TIME::parse)
+            .map(Instant::from);
+
+    Optional<Instant> retryAfter =
+        getRetryAfter(response).map(responseDate.orElse(clock.instant())::plusMillis);
 
     return Stream.of(reset, retryAfter).filter(Optional::isPresent).map(Optional::get).findFirst();
   }

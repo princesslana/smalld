@@ -543,6 +543,7 @@ public class TestSmallD {
             "abc", MediaType.get("text/plain"), getClass().getResource("multipart_input.txt")));
   }
 
+  @Test
   public void delete_shouldDeleteToEndpoint() {
     server.connect(subject);
 

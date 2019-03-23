@@ -45,13 +45,6 @@ public class TestSmallD {
   }
 
   @Test
-  public void baseUrl_whenNotSetExplicitly_shouldBeDiscordUrl() {
-    SmallD defaultSmallD = new SmallD(Config.builder().setToken(MockDiscordServer.TOKEN).build());
-    Assertions.assertThat(defaultSmallD)
-        .hasFieldOrPropertyWithValue("baseUrl", "https://discordapp.com/api/v6");
-  }
-
-  @Test
   public void currentShard_whenNotSetExplicitly_shouldBeZero() {
     SmallD defaultSmallD = new SmallD(Config.builder().setToken(MockDiscordServer.TOKEN).build());
     Assertions.assertThat(defaultSmallD.getCurrentShard()).isEqualTo(0);

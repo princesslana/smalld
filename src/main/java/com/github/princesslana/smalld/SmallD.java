@@ -43,15 +43,12 @@ public class SmallD implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SmallD.class);
 
-  private static final String V6_BASE_URL = "https://discordapp.com/api/v6";
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
   private final Config config;
 
   private int currentShard = 0;
   private int numberOfShards = 1;
-
-  private String baseUrl = V6_BASE_URL;
 
   private final String userAgent;
 
@@ -134,16 +131,6 @@ public class SmallD implements AutoCloseable {
   public void setShard(int current, int number) {
     this.currentShard = current;
     this.numberOfShards = number;
-  }
-
-  /**
-   * Set the base URL to be used for reaching the Discord API. If not set this will default to
-   * {@code https://discordapp.com/api/v6}
-   *
-   * @param baseUrl the base URL to be used to reach the Discord API
-   */
-  public void setBaseUrl(String baseUrl) {
-    this.baseUrl = baseUrl;
   }
 
   private String getUserAgent() {
@@ -363,7 +350,7 @@ public class SmallD implements AutoCloseable {
   }
 
   private String sendRequest(String path, UnaryOperator<Request.Builder> build) {
-    Request.Builder builder = new Request.Builder().url(baseUrl + path);
+    Request.Builder builder = new Request.Builder().url(config.getBaseUrl() + path);
 
     return sendRequest(build.apply(builder).build());
   }

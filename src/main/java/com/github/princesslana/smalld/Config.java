@@ -5,12 +5,23 @@ import java.time.Clock;
 /** Config options for {@link SmallD}. */
 public class Config {
 
+  private String baseUrl;
   private final Clock clock;
   private final String token;
 
   private Config(Builder builder) {
+    baseUrl = builder.baseUrl;
     clock = builder.clock;
     token = builder.token;
+  }
+
+  /**
+   * Returns the base url that resource requests should be sent to.
+   *
+   * @return the base url to use for resources
+   */
+  public String getBaseUrl() {
+    return baseUrl;
   }
 
   /**
@@ -43,10 +54,25 @@ public class Config {
   /** {@code Builder} of {@code Config} instances. */
   public static class Builder {
 
+    private static final String V6_BASE_URL = "https://discordapp.com/api/v6";
+
+    private String baseUrl = V6_BASE_URL;
     private Clock clock = Clock.systemUTC();
     private String token;
 
     private Builder() {}
+
+    /**
+     * Set the base URL to be used for reaching the Discord API. If not set this will default to
+     * {@code https://discordapp.com/api/v6}
+     *
+     * @param baseUrl the base URL to be used to reach the Discord API
+     * @return this
+     */
+    public Builder setBaseUrl(String baseUrl) {
+      this.baseUrl = baseUrl;
+      return this;
+    }
 
     /**
      * Set the {@link Clock} to be used by {@link SmallD}.

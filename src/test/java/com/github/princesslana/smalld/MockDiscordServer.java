@@ -37,9 +37,14 @@ public class MockDiscordServer implements AutoCloseable {
   }
 
   public SmallD newSmallD(Clock clock) {
-    SmallD smalld = new SmallD(Config.builder().setToken(TOKEN).setClock(clock).build());
-    smalld.setBaseUrl(web.url("/api/v6").toString());
-    return smalld;
+    Config config =
+        Config.builder()
+            .setToken(TOKEN)
+            .setClock(clock)
+            .setBaseUrl(web.url("/api/v6").toString())
+            .build();
+
+    return new SmallD(config);
   }
 
   public void close() {

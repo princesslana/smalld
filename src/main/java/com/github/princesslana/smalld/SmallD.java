@@ -377,8 +377,19 @@ public class SmallD implements AutoCloseable {
    * @return the created SmallD instance
    */
   public static SmallD create(String token) {
-    Config config = Config.builder().setToken(token).build();
+    return create(Config.builder().setToken(token).build());
+  }
 
+  /**
+   * Creates an instance with the given {@link Config}.
+   *
+   * <p>{@code create} will construct a SmallD instance and add helpers that will handle identifying
+   * and heartbeating with the Discord gateway.
+   *
+   * @param config the config to use
+   * @return the created SmallD instance
+   */
+  public static SmallD create(Config config) {
     SmallD smalld = new SmallD(config);
 
     SequenceNumber seq = new SequenceNumber(smalld);
@@ -386,5 +397,34 @@ public class SmallD implements AutoCloseable {
     new Heartbeat(smalld, seq);
 
     return smalld;
+  }
+
+  /**
+   * Runs an instance with the given token and initialized with the given {@link Consumer}.
+   *
+   * <p>Creates an instance and passes it to the {@link Consumer} to allow setup of a bot. Then
+   * {@link #run()} is called.
+   *
+   * @param token the token to authenticate with
+   * @param bot code to setup the bot to run
+   */
+  public static void run(String token, Consumer<SmallD> bot) {
+    run(Config.builder().setToken(token).build(), bot);
+  }
+
+  /**
+   * Runs an instance with the given config and initialized with the given {@link Consumer}.
+   *
+   * <p>Creates an instance and passes it to the {@link Consumer} to allow setup of a bot. Then
+   * {@link #run()} is called.
+   *
+   * @param config the config to use
+   * @param bot code to setup the bot to run
+   */
+  public static void run(Config config, Consumer<SmallD> bot) {
+    try (SmallD smalld = create(config)) {
+      bot.accept(smalld);
+      smalld.run();
+    }
   }
 }

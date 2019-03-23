@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.function.UnaryOperator;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -37,14 +38,17 @@ public class MockDiscordServer implements AutoCloseable {
   }
 
   public SmallD newSmallD(Clock clock) {
-    Config config =
+    return newSmallD(c -> c.setClock(clock));
+  }
+
+  public SmallD newSmallD(UnaryOperator<Config.Builder> build) {
+    Config.Builder config =
         Config.builder()
             .setToken(TOKEN)
-            .setClock(clock)
-            .setBaseUrl(web.url("/api/v6").toString())
-            .build();
+            .setClock(Clock.systemUTC())
+            .setBaseUrl(web.url("/api/v6").toString());
 
-    return new SmallD(config);
+    return new SmallD(build.apply(config).build());
   }
 
   public void close() {

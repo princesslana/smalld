@@ -7,11 +7,15 @@ public class Config {
 
   private String baseUrl;
   private final Clock clock;
+  private final int currentShard;
+  private final int numberOfShards;
   private final String token;
 
   private Config(Builder builder) {
     baseUrl = builder.baseUrl;
     clock = builder.clock;
+    currentShard = builder.currentShard;
+    numberOfShards = builder.numberOfShards;
     token = builder.token;
   }
 
@@ -31,6 +35,24 @@ public class Config {
    */
   public Clock getClock() {
     return clock;
+  }
+
+  /**
+   * Return what is configured as the current shard.
+   *
+   * @return the configuration for current shard
+   */
+  public int getCurrentShard() {
+    return currentShard;
+  }
+
+  /**
+   * Return what is configured as the number of shards.
+   *
+   * @return the number of shards configured
+   */
+  public int getNumberOfShards() {
+    return numberOfShards;
   }
 
   /**
@@ -58,6 +80,8 @@ public class Config {
 
     private String baseUrl = V6_BASE_URL;
     private Clock clock = Clock.systemUTC();
+    private int currentShard = 0;
+    private int numberOfShards = 1;
     private String token;
 
     private Builder() {}
@@ -82,6 +106,19 @@ public class Config {
      */
     public Builder setClock(Clock clock) {
       this.clock = clock;
+      return this;
+    }
+
+    /**
+     * Configure the current shard and number of shards.
+     *
+     * @param current the current shard
+     * @param number the number of shards
+     * @return this
+     */
+    public Builder setShard(int current, int number) {
+      this.currentShard = current;
+      this.numberOfShards = number;
       return this;
     }
 

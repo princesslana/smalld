@@ -47,9 +47,6 @@ public class SmallD implements AutoCloseable {
 
   private final Config config;
 
-  private int currentShard = 0;
-  private int numberOfShards = 1;
-
   private final String userAgent;
 
   private final OkHttpClient client;
@@ -110,7 +107,7 @@ public class SmallD implements AutoCloseable {
    * @return the configuration for current shard
    */
   public int getCurrentShard() {
-    return currentShard;
+    return config.getCurrentShard();
   }
 
   /**
@@ -119,18 +116,7 @@ public class SmallD implements AutoCloseable {
    * @return the number of shards configured
    */
   public int getNumberOfShards() {
-    return numberOfShards;
-  }
-
-  /**
-   * Configure the current shard and number of shards.
-   *
-   * @param current the current shard
-   * @param number the number of shards
-   */
-  public void setShard(int current, int number) {
-    this.currentShard = current;
-    this.numberOfShards = number;
+    return config.getNumberOfShards();
   }
 
   private String getUserAgent() {

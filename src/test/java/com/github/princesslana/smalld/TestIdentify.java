@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Test;
 
 public class TestIdentify {
 
-  private Identify subject;
-
   private SmallD smalld;
 
   private MockDiscordServer server;
@@ -39,7 +37,7 @@ public class TestIdentify {
 
     smalld = server.newSmallD();
 
-    subject = new Identify(smalld, new SequenceNumber(smalld));
+    new Identify(smalld, new SequenceNumber(smalld));
   }
 
   @AfterEach
@@ -106,7 +104,9 @@ public class TestIdentify {
 
   @Test
   public void subject_whenShardSet_shouldSendShardDetail() {
-    smalld.setShard(2, 5);
+    SmallD smalld = server.newSmallD(cfg -> cfg.setShard(2, 5));
+
+    new Identify(smalld, new SequenceNumber(smalld));
 
     server.gateway().onOpen(SEND_HELLO);
 

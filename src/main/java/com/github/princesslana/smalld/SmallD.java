@@ -43,15 +43,9 @@ public class SmallD implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SmallD.class);
 
-  private static final String V6_BASE_URL = "https://discordapp.com/api/v6";
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
-  private final String token;
-
-  private int currentShard = 0;
-  private int numberOfShards = 1;
-
-  private String baseUrl = V6_BASE_URL;
+  private final Config config;
 
   private final String userAgent;
 
@@ -66,18 +60,17 @@ public class SmallD implements AutoCloseable {
   private WebSocket gatewayWebSocket;
 
   /**
-   * Construct a {@code SmallD} instance with the provided token and source of time.
+   * Construct a {@code SmallD} instance with the provided config.
    *
    * <p>Note that this does not setup any of the default functionality such as identifying,
    * resuming, etc.
    *
-   * @param token the token to use to authenticate the bot with Discord
-   * @param clock the clock to use as a source for the current {@link java.time.Instant}
+   * @param config the config to use with this instance
    */
-  public SmallD(String token, Clock clock) {
-    this.token = token;
+  public SmallD(Config config) {
+    this.config = config;
     this.userAgent = loadUserAgent();
-    this.client = buildHttpClient(clock);
+    this.client = buildHttpClient(config.getClock());
   }
 
   private String loadUserAgent() {
@@ -105,7 +98,7 @@ public class SmallD implements AutoCloseable {
    * @return the bot token in use
    */
   public String getToken() {
-    return token;
+    return config.getToken();
   }
 
   /**
@@ -114,7 +107,7 @@ public class SmallD implements AutoCloseable {
    * @return the configuration for current shard
    */
   public int getCurrentShard() {
-    return currentShard;
+    return config.getCurrentShard();
   }
 
   /**
@@ -123,28 +116,7 @@ public class SmallD implements AutoCloseable {
    * @return the number of shards configured
    */
   public int getNumberOfShards() {
-    return numberOfShards;
-  }
-
-  /**
-   * Configure the current shard and number of shards.
-   *
-   * @param current the current shard
-   * @param number the number of shards
-   */
-  public void setShard(int current, int number) {
-    this.currentShard = current;
-    this.numberOfShards = number;
-  }
-
-  /**
-   * Set the base URL to be used for reaching the Discord API. If not set this will default to
-   * {@code https://discordapp.com/api/v6}
-   *
-   * @param baseUrl the base URL to be used to reach the Discord API
-   */
-  public void setBaseUrl(String baseUrl) {
-    this.baseUrl = baseUrl;
+    return config.getNumberOfShards();
   }
 
   private String getUserAgent() {
@@ -364,7 +336,7 @@ public class SmallD implements AutoCloseable {
   }
 
   private String sendRequest(String path, UnaryOperator<Request.Builder> build) {
-    Request.Builder builder = new Request.Builder().url(baseUrl + path);
+    Request.Builder builder = new Request.Builder().url(config.getBaseUrl() + path);
 
     return sendRequest(build.apply(builder).build());
   }
@@ -405,7 +377,9 @@ public class SmallD implements AutoCloseable {
    * @return the created SmallD instance
    */
   public static SmallD create(String token) {
-    SmallD smalld = new SmallD(token, Clock.systemUTC());
+    Config config = Config.builder().setToken(token).build();
+
+    SmallD smalld = new SmallD(config);
 
     SequenceNumber seq = new SequenceNumber(smalld);
     new Identify(smalld, seq);

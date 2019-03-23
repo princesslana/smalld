@@ -46,7 +46,7 @@ public class SmallD implements AutoCloseable {
   private static final String V6_BASE_URL = "https://discordapp.com/api/v6";
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
-  private final String token;
+  private final Config config;
 
   private int currentShard = 0;
   private int numberOfShards = 1;
@@ -66,18 +66,17 @@ public class SmallD implements AutoCloseable {
   private WebSocket gatewayWebSocket;
 
   /**
-   * Construct a {@code SmallD} instance with the provided token and source of time.
+   * Construct a {@code SmallD} instance with the provided config.
    *
    * <p>Note that this does not setup any of the default functionality such as identifying,
    * resuming, etc.
    *
-   * @param token the token to use to authenticate the bot with Discord
-   * @param clock the clock to use as a source for the current {@link java.time.Instant}
+   * @param config the config to use with this instance
    */
-  public SmallD(String token, Clock clock) {
-    this.token = token;
+  public SmallD(Config config) {
+    this.config = config;
     this.userAgent = loadUserAgent();
-    this.client = buildHttpClient(clock);
+    this.client = buildHttpClient(config.getClock());
   }
 
   private String loadUserAgent() {
@@ -105,7 +104,7 @@ public class SmallD implements AutoCloseable {
    * @return the bot token in use
    */
   public String getToken() {
-    return token;
+    return config.getToken();
   }
 
   /**
@@ -405,7 +404,9 @@ public class SmallD implements AutoCloseable {
    * @return the created SmallD instance
    */
   public static SmallD create(String token) {
-    SmallD smalld = new SmallD(token, Clock.systemUTC());
+    Config config = Config.builder().setToken(token).build();
+
+    SmallD smalld = new SmallD(config);
 
     SequenceNumber seq = new SequenceNumber(smalld);
     new Identify(smalld, seq);

@@ -509,6 +509,24 @@ public class TestSmallD {
   }
 
   @Test
+  public void delete_shouldReturnResponseOn200() {
+    assertReturnsResponseOn200((s, path, payload) -> s.delete(path));
+  }
+
+  @Test
+  public void delete_shouldDeleteToEndpoint() {
+    server.connect(subject);
+
+    server.enqueue("");
+
+    subject.delete("/test/url");
+
+    RecordedRequest req = server.takeRequest();
+
+    assertThatRequestWas(req, "DELETE", "/test/url");
+  }
+
+  @Test
   public void post_shouldIncludeToken() {
     server.connect(subject);
 
@@ -545,19 +563,6 @@ public class TestSmallD {
     assertThatMultipartSendsBody(
         new Attachment(
             "abc", MediaType.get("text/plain"), getClass().getResource("multipart_input.txt")));
-  }
-
-  @Test
-  public void delete_shouldDeleteToEndpoint() {
-    server.connect(subject);
-
-    server.enqueue("");
-
-    subject.delete("/test/url");
-
-    RecordedRequest req = server.takeRequest();
-
-    assertThatRequestWas(req, "DELETE", "/test/url");
   }
 
   @Test

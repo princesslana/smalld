@@ -268,15 +268,16 @@ public class SmallD implements AutoCloseable {
    * start with {@code /} and will be appended to the base URL that has been configured.
    *
    * @param path the path to make the request to
+   * @return the body of the HTTP response
    * @throws RateLimitException if the request was rate limited
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
    */
-  public void delete(String path) {
+  public String delete(String path) {
     LOG.debug("HTTP DELETE {}", path);
 
-    sendRequest(path, Request.Builder::delete);
+    return sendRequest(path, Request.Builder::delete);
   }
 
   /** Wait for close. Blocks the current thread until it is. */

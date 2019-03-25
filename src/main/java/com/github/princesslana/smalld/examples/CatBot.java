@@ -33,21 +33,20 @@ public class CatBot {
   public static void main(String[] args) {
     SmallD.run(
         System.getenv("SMALLD_TOKEN"),
-        smalld -> {
-          smalld.onGatewayPayload(
-              p -> {
-                JsonObject json = Json.parse(p).asObject();
+        smalld ->
+            smalld.onGatewayPayload(
+                p -> {
+                  JsonObject json = Json.parse(p).asObject();
 
-                if (json.getInt("op", -1) == 0
-                    && json.getString("t", "").equals("MESSAGE_CREATE")
-                    && json.get("d").asObject().getString("content", "").equals("++cat")) {
+                  if (json.getInt("op", -1) == 0
+                      && json.getString("t", "").equals("MESSAGE_CREATE")
+                      && json.get("d").asObject().getString("content", "").equals("++cat")) {
 
-                  String channelId = json.get("d").asObject().getString("channel_id", null);
+                    String channelId = json.get("d").asObject().getString("channel_id", null);
 
-                  sendCat(smalld, channelId);
-                }
-              });
-        });
+                    sendCat(smalld, channelId);
+                  }
+                }));
   }
 
   private static void sendCat(SmallD smalld, String channelId) {

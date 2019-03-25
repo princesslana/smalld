@@ -27,26 +27,25 @@ public class GatewayPayloadLogger {
 
     SmallD.run(
         System.getenv("SMALLD_TOKEN"),
-        smalld -> {
-          smalld.onGatewayPayload(
-              p -> {
-                JsonObject in = Json.parse(p).asObject();
+        smalld ->
+            smalld.onGatewayPayload(
+                p -> {
+                  JsonObject in = Json.parse(p).asObject();
 
-                if (!isMessageFromBot(in)) {
-                  String out = in.toString(WriterConfig.PRETTY_PRINT);
+                  if (!isMessageFromBot(in)) {
+                    String out = in.toString(WriterConfig.PRETTY_PRINT);
 
-                  if (out.length() > 1950) {
-                    out = out.substring(0, 1950) + "...";
+                    if (out.length() > 1950) {
+                      out = out.substring(0, 1950) + "...";
+                    }
+
+                    String content = "```javascript\n" + out + "\n```";
+
+                    smalld.post(
+                        "/channels/" + channel + "/messages",
+                        Json.object().add("content", content).toString());
                   }
-
-                  String content = "```javascript\n" + out + "\n```";
-
-                  smalld.post(
-                      "/channels/" + channel + "/messages",
-                      Json.object().add("content", content).toString());
-                }
-              });
-        });
+                }));
   }
 
   private static boolean isMessageFromBot(JsonObject payload) {

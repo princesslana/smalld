@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
-import okhttp3.MediaType;
 import okio.Buffer;
 
 /**
@@ -19,7 +18,7 @@ public class Attachment {
 
   private final String filename;
 
-  private final MediaType mediaType;
+  private final String mimeType;
 
   private final Supplier<InputStream> stream;
 
@@ -27,33 +26,33 @@ public class Attachment {
    * Create an instance with content from a byte array.
    *
    * @param filename the filename of this attachment
-   * @param mediaType the media type of this attachment
+   * @param mimeType the mime type of this attachment
    * @param bytes the content of this attachment
    */
-  public Attachment(String filename, MediaType mediaType, byte[] bytes) {
-    this(filename, mediaType, () -> new ByteArrayInputStream(bytes));
+  public Attachment(String filename, String mimeType, byte[] bytes) {
+    this(filename, mimeType, () -> new ByteArrayInputStream(bytes));
   }
 
   /**
    * Create an instance with content from the provided {@link File}.
    *
    * @param filename the filename of this attachment
-   * @param mediaType the media type of this attachment
+   * @param mimeType the mime type of this attachment
    * @param file file to retrieve content of this attachment
    */
-  public Attachment(String filename, MediaType mediaType, File file) {
-    this(filename, mediaType, supplyFrom(() -> new FileInputStream(file)));
+  public Attachment(String filename, String mimeType, File file) {
+    this(filename, mimeType, supplyFrom(() -> new FileInputStream(file)));
   }
 
   /**
    * Create an instance with content from the provided {@link URL}.
    *
    * @param filename the filename of this attachment
-   * @param mediaType the media type of this attachment
+   * @param mimeType the mime type of this attachment
    * @param url url to retrieve content of this attachment
    */
-  public Attachment(String filename, MediaType mediaType, URL url) {
-    this(filename, mediaType, supplyFrom(url::openStream));
+  public Attachment(String filename, String mimeType, URL url) {
+    this(filename, mimeType, supplyFrom(url::openStream));
   }
 
   /**
@@ -62,12 +61,12 @@ public class Attachment {
    * supplier it will use it to open an {@link InputStream}, read, and then close it.
    *
    * @param filename the filename of this attachment
-   * @param mediaType the media type of this attachment
+   * @param mimeType the mime type of this attachment
    * @param stream a supplier that can create an InputStream to get the content
    */
-  public Attachment(String filename, MediaType mediaType, Supplier<InputStream> stream) {
+  public Attachment(String filename, String mimeType, Supplier<InputStream> stream) {
     this.filename = filename;
-    this.mediaType = mediaType;
+    this.mimeType = mimeType;
     this.stream = stream;
   }
 
@@ -81,12 +80,12 @@ public class Attachment {
   }
 
   /**
-   * Return the media type.
+   * Return the mime type.
    *
-   * @return the media type
+   * @return the mime type
    */
-  public MediaType getMediaType() {
-    return mediaType;
+  public String getMimeType() {
+    return mimeType;
   }
 
   /**

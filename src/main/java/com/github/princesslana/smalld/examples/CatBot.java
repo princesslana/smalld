@@ -6,7 +6,6 @@ import com.github.princesslana.smalld.Attachment;
 import com.github.princesslana.smalld.SmallD;
 import java.io.IOException;
 import java.net.URL;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -54,7 +53,7 @@ public class CatBot {
     smalld.post(
         "/channels/" + channelId + "/messages",
         "",
-        new Attachment("cat.jpg", MediaType.get("image/jpeg"), getCatUrl()));
+        new Attachment("cat.jpg", "image/jpeg", getCatUrl()));
   }
 
   private static URL getCatUrl() {

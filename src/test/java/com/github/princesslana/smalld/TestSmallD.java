@@ -6,7 +6,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import okhttp3.MediaType;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -480,7 +479,8 @@ public class TestSmallD {
   @Test
   public void post_whenMultipart_shouldReturnResponseOn200() {
     assertReturnsResponseOn200(
-        (s, path, payload) -> s.post(path, payload, new Attachment("", null, new byte[] {})));
+        (s, path, payload) ->
+            s.post(path, payload, new Attachment("", "text/plain", new byte[] {})));
   }
 
   @Test
@@ -546,7 +546,7 @@ public class TestSmallD {
 
     server.enqueue("");
 
-    subject.post("/test/url", "", new Attachment("", null, new byte[] {}));
+    subject.post("/test/url", "", new Attachment("", "text/plain", new byte[] {}));
 
     RecordedRequest req = server.takeRequest();
     assertThatRequestWas(req, "POST", "/test/url");
@@ -554,15 +554,13 @@ public class TestSmallD {
 
   @Test
   public void post_whenBytesAttachment_shouldSendMultipartBody() {
-    assertThatMultipartSendsBody(
-        new Attachment("abc", MediaType.get("text/plain"), "xyz".getBytes()));
+    assertThatMultipartSendsBody(new Attachment("abc", "text/plain", "xyz".getBytes()));
   }
 
   @Test
   public void post_whenUrlAttachment_shouldSendMultipartBody() {
     assertThatMultipartSendsBody(
-        new Attachment(
-            "abc", MediaType.get("text/plain"), getClass().getResource("multipart_input.txt")));
+        new Attachment("abc", "text/plain", getClass().getResource("multipart_input.txt")));
   }
 
   @Test

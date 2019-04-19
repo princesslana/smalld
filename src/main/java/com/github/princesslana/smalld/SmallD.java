@@ -215,7 +215,9 @@ public class SmallD implements AutoCloseable {
 
     for (Attachment a : attachments) {
       builder.addFormDataPart(
-          "file", a.getFilename(), RequestBody.create(a.getMediaType(), a.getBytes()));
+          "file",
+          a.getFilename(),
+          RequestBody.create(MediaType.get(a.getMimeType()), a.getBytes()));
     }
 
     return sendRequest(path, b -> b.post(builder.build()));

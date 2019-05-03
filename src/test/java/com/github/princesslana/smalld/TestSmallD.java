@@ -3,7 +3,6 @@ package com.github.princesslana.smalld;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import okhttp3.mockwebserver.MockResponse;
@@ -604,22 +603,6 @@ public class TestSmallD {
           server.assertConnected();
           server.gateway().assertClosing(1000, "Closed.");
         });
-  }
-
-  @Test
-  public void close_whenConnected_shouldCallListener() {
-    CountDownLatch closeGate = new CountDownLatch(1);
-
-    server.enqueueConnect();
-
-    server.gateway().onOpen((ws, r) -> ws.send("DUMMY"));
-    subject.onGatewayPayload(m -> subject.close());
-
-    subject.onClose(closeGate::countDown);
-
-    subject.connect();
-
-    Assert.thatWithinOneSecond(closeGate::await);
   }
 
   @Test

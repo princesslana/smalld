@@ -53,8 +53,6 @@ public class SmallD implements AutoCloseable {
 
   private final List<Consumer<String>> gatewayPayloadListeners = new ArrayList<>();
 
-  private final List<Runnable> closeListeners = new ArrayList<>();
-
   private final CountDownLatch closeGate = new CountDownLatch(1);
 
   private WebSocket gatewayWebSocket;
@@ -291,27 +289,13 @@ public class SmallD implements AutoCloseable {
     }
   }
 
-  /**
-   * Close the connection to Discord. Closes the websocket connection to the gateway and calls all
-   * {@link #onClose} listeners.
-   */
+  /** Close the connection to Discord. */
   public void close() {
     if (gatewayWebSocket != null) {
       gatewayWebSocket.close(1000, "Closed.");
     }
 
-    closeListeners.forEach(Runnable::run);
     closeGate.countDown();
-  }
-
-  /**
-   * Add a listener to be called when closed. It will be called after the Gateway has been
-   * disconnected.
-   *
-   * @param r a {@link Runnable} to be called on close.
-   */
-  public void onClose(Runnable r) {
-    closeListeners.add(r);
   }
 
   /** Connect and then await until closed. */

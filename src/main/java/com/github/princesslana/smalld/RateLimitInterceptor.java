@@ -19,7 +19,7 @@ public class RateLimitInterceptor implements Interceptor {
 
   private RateLimit globalRateLimit = RateLimit.allowAll();
 
-  private Map<String, RateLimit> resourceRateLimit = new ConcurrentHashMap<>();
+  private Map<RateLimitBucket, RateLimit> resourceRateLimit = new ConcurrentHashMap<>();
 
   /**
    * Constructs an instance using the provided source of time.
@@ -57,11 +57,11 @@ public class RateLimitInterceptor implements Interceptor {
   }
 
   private RateLimit getRateLimitForPath(Request request) {
-    return resourceRateLimit.getOrDefault(request.url().encodedPath(), RateLimit.allowAll());
+    return resourceRateLimit.getOrDefault(RateLimitBucket.from(request), RateLimit.allowAll());
   }
 
   private void setRateLimitForPath(Request request, RateLimit rateLimit) {
-    resourceRateLimit.put(request.url().encodedPath(), rateLimit);
+    resourceRateLimit.put(RateLimitBucket.from(request), rateLimit);
   }
 
   private Optional<Instant> getRateLimitExpiry(Response response) {

@@ -112,10 +112,6 @@ public class RateLimitBucket {
       return m.matches() ? Optional.of(m.replaceAll(to)) : Optional.empty();
     }
 
-    public Matcher matcher(String input) {
-      return from.matcher(input);
-    }
-
     public static Mapping of(String from, String to) {
       return new Mapping(Pattern.compile(from), to);
     }

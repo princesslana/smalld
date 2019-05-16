@@ -32,4 +32,16 @@ public class TestRateLimitBucket {
     Assertions.assertThat(RateLimitBucket.from("/channels/123/messages/bulk-delete"))
         .isEqualTo(RateLimitBucket.from("/channels/123/messages/bulk_delete"));
   }
+
+  @Test
+  public void from_whenMessageIdVaries_shouldBeSameBucket() {
+    Assertions.assertThat(RateLimitBucket.from("/channels/123/messages/888"))
+        .isEqualTo(RateLimitBucket.from("/channels/123/messages/999"));
+  }
+
+  @Test
+  public void from_whenChannelIdVaries_shouldBeDifferentBucket() {
+    Assertions.assertThat(RateLimitBucket.from("/channels/123/messages/999"))
+        .isNotEqualTo(RateLimitBucket.from("/channels/456/messages/999"));
+  }
 }

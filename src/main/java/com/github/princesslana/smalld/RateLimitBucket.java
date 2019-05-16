@@ -26,13 +26,13 @@ public class RateLimitBucket {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj == this) {
-      return true;
-    }
     if (obj == null) {
       return false;
     }
-    if (!obj.getClass().equals(RateLimitBucket.class)) {
+    if (obj == this) {
+      return true;
+    }
+    if (obj.getClass() != getClass()) {
       return false;
     }
     RateLimitBucket rhs = (RateLimitBucket) obj;

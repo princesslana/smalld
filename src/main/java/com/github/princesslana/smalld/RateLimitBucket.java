@@ -73,6 +73,7 @@ public class RateLimitBucket {
   /**
    * Creates a {@code RateLimitBucket} from a HTTP method and path.
    *
+   * @param method the HTTP request method
    * @param path the HTTP request path
    * @return the {@code RateLimitBucket} for the given method and path
    */

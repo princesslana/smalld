@@ -8,6 +8,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import okhttp3.Request;
 
 /**
@@ -17,6 +18,9 @@ import okhttp3.Request;
 public class RateLimitBucket {
 
   private static final Collection<Mapping> MAPPINGS = loadBucketMappings();
+
+  private static final Mapping DELETE_MESSAGE_MAPPING =
+      Mapping.of("/channels/(\\d+)/messages/(\\d+)", "DELETE /channels/$1/messages/{message.id}");
 
   private String bucket;
 
@@ -72,10 +76,12 @@ public class RateLimitBucket {
    * @param path the HTTP request path
    * @return the {@code RateLimitBucket} for the given method and path
    */
-  public static RateLimitBucket from(String path) {
+  public static RateLimitBucket from(String method, String path) {
+    Stream<Mapping> deleteMessage =
+        method.equalsIgnoreCase("DELETE") ? Stream.of(DELETE_MESSAGE_MAPPING) : Stream.of();
+
     String bucket =
-        MAPPINGS
-            .stream()
+        Stream.concat(deleteMessage, MAPPINGS.stream())
             .map(m -> m.replaceIn(path))
             .filter(Optional::isPresent)
             .map(Optional::get)
@@ -92,7 +98,7 @@ public class RateLimitBucket {
    * @return the {@code RateLimitBucket} for the given request
    */
   public static RateLimitBucket from(Request request) {
-    return from(request.url().encodedPath());
+    return from(request.method(), request.url().encodedPath());
   }
 
   /** A Mapping between a request path and a {@link RateLimitBucket}. */

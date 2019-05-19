@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -52,6 +54,8 @@ public class SmallD implements AutoCloseable {
   private final OkHttpClient client;
 
   private final List<Consumer<String>> gatewayPayloadListeners = new ArrayList<>();
+
+  private final ExecutorService onGatewayPayloadExecutor = Executors.newSingleThreadExecutor();
 
   private final CountDownLatch closeGate = new CountDownLatch(1);
 
@@ -127,26 +131,37 @@ public class SmallD implements AutoCloseable {
 
     Request request = new Request.Builder().url(gatewayUrl).build();
 
+    WebSocketListener onMessageListener =
+        new WebSocketListener() {
+          @Override
+          public void onMessage(WebSocket ws, String text) {
+            onGatewayPayloadExecutor.execute(() -> notifyListeners(text));
+          }
+        };
+
     gatewayWebSocket =
-        client.newWebSocket(
-            request,
-            new LoggingWebSocketListener(
-                LOG,
-                new WebSocketListener() {
-                  @Override
-                  public void onMessage(WebSocket ws, String text) {
-                    gatewayPayloadListeners.forEach(l -> l.accept(text));
-                  }
-                }));
+        client.newWebSocket(request, new LoggingWebSocketListener(LOG, onMessageListener));
   }
 
   /**
    * Add a listener for payloads received from the Discord gateway.
    *
+   * <p>Listeners are executed on a single thread. This means that a long running listener will
+   * block other events. Listners are responsible for shifting work to other threads as appropriate.
+   *
    * @param consumer the listener to be called when a payload is received.
    */
   public void onGatewayPayload(Consumer<String> consumer) {
     gatewayPayloadListeners.add(consumer);
+  }
+
+  private void notifyListeners(String text) {
+    try {
+      gatewayPayloadListeners.forEach(l -> l.accept(text));
+    } catch (Exception e) {
+      LOG.warn("Exception thrown when notifying listeners of gateway payload", e);
+      throw e;
+    }
   }
 
   /**

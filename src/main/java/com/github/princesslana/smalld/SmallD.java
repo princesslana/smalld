@@ -146,6 +146,9 @@ public class SmallD implements AutoCloseable {
   /**
    * Add a listener for payloads received from the Discord gateway.
    *
+   * <p>Listeners are executed on a single thread. This means that a long running listener will
+   * block other events. Listners are responsible for shifting work to other threads as appropriate.
+   *
    * @param consumer the listener to be called when a payload is received.
    */
   public void onGatewayPayload(Consumer<String> consumer) {

@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 public class Heartbeat {
 
   private final ScheduledExecutorService heartbeatExecutor =
-      Executors.newSingleThreadScheduledExecutor();
+      Executors.newSingleThreadScheduledExecutor(SmallD.DAEMON_THREAD_FACTORY);
 
   private final SmallD smalld;
 

@@ -10,6 +10,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -43,6 +44,12 @@ import org.slf4j.LoggerFactory;
  */
 public class SmallD implements AutoCloseable {
 
+  public static final ThreadFactory DAEMON_THREAD_FACTORY = r -> {
+    Thread t = new Thread(r);
+    t.setDaemon(true);
+    return t;
+  };
+
   private static final Logger LOG = LoggerFactory.getLogger(SmallD.class);
 
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
@@ -55,7 +62,7 @@ public class SmallD implements AutoCloseable {
 
   private final List<Consumer<String>> gatewayPayloadListeners = new ArrayList<>();
 
-  private final ExecutorService onGatewayPayloadExecutor = Executors.newSingleThreadExecutor();
+  private final ExecutorService onGatewayPayloadExecutor = Executors.newSingleThreadExecutor(DAEMON_THREAD_FACTORY);
 
   private final CountDownLatch closeGate = new CountDownLatch(1);
 
@@ -136,6 +143,11 @@ public class SmallD implements AutoCloseable {
           @Override
           public void onMessage(WebSocket ws, String text) {
             onGatewayPayloadExecutor.execute(() -> notifyListeners(text));
+          }
+
+          @Override
+          public void onFailure(WebSocket ws, Throwable t, Response r) {
+            close();
           }
         };
 
@@ -304,11 +316,14 @@ public class SmallD implements AutoCloseable {
     }
   }
 
-  /** Close the connection to Discord. */
+  /** Close the connection to Discord and clean up resources. */
   public void close() {
     if (gatewayWebSocket != null) {
       gatewayWebSocket.close(1000, "Closed.");
     }
+
+    client.dispatcher().executorService().shutdown();
+    client.connectionPool().evictAll();
 
     closeGate.countDown();
   }

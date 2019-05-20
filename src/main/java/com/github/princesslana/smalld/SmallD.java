@@ -44,11 +44,12 @@ import org.slf4j.LoggerFactory;
  */
 public class SmallD implements AutoCloseable {
 
-  public static final ThreadFactory DAEMON_THREAD_FACTORY = r -> {
-    Thread t = new Thread(r);
-    t.setDaemon(true);
-    return t;
-  };
+  public static final ThreadFactory DAEMON_THREAD_FACTORY =
+      r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        return t;
+      };
 
   private static final Logger LOG = LoggerFactory.getLogger(SmallD.class);
 
@@ -62,7 +63,8 @@ public class SmallD implements AutoCloseable {
 
   private final List<Consumer<String>> gatewayPayloadListeners = new ArrayList<>();
 
-  private final ExecutorService onGatewayPayloadExecutor = Executors.newSingleThreadExecutor(DAEMON_THREAD_FACTORY);
+  private final ExecutorService onGatewayPayloadExecutor =
+      Executors.newSingleThreadExecutor(DAEMON_THREAD_FACTORY);
 
   private final CountDownLatch closeGate = new CountDownLatch(1);
 
@@ -153,6 +155,33 @@ public class SmallD implements AutoCloseable {
 
     gatewayWebSocket =
         client.newWebSocket(request, new LoggingWebSocketListener(LOG, onMessageListener));
+  }
+
+  /** Wait for close. Blocks the current thread until it is. */
+  public void await() {
+    try {
+      closeGate.await();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  /** Close the connection to Discord and clean up resources. */
+  public void close() {
+    if (gatewayWebSocket != null) {
+      gatewayWebSocket.close(1000, "Closed.");
+    }
+
+    client.dispatcher().executorService().shutdown();
+    client.connectionPool().evictAll();
+
+    closeGate.countDown();
+  }
+
+  /** Connect and then await until closed. */
+  public void run() {
+    connect();
+    await();
   }
 
   /**
@@ -305,33 +334,6 @@ public class SmallD implements AutoCloseable {
     LOG.debug("HTTP DELETE {}", path);
 
     return sendRequest(path, Request.Builder::delete);
-  }
-
-  /** Wait for close. Blocks the current thread until it is. */
-  public void await() {
-    try {
-      closeGate.await();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-  }
-
-  /** Close the connection to Discord and clean up resources. */
-  public void close() {
-    if (gatewayWebSocket != null) {
-      gatewayWebSocket.close(1000, "Closed.");
-    }
-
-    client.dispatcher().executorService().shutdown();
-    client.connectionPool().evictAll();
-
-    closeGate.countDown();
-  }
-
-  /** Connect and then await until closed. */
-  public void run() {
-    connect();
-    await();
   }
 
   private String getGatewayUrl() {

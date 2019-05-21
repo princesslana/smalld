@@ -2,22 +2,15 @@ package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.ParseException;
-import java.io.IOException;
-import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
-import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -57,9 +50,7 @@ public class SmallD implements AutoCloseable {
 
   private final Config config;
 
-  private final String userAgent;
-
-  private final OkHttpClient client;
+  private final HttpClient http;
 
   private final List<Consumer<String>> gatewayPayloadListeners = new ArrayList<>();
 
@@ -80,27 +71,7 @@ public class SmallD implements AutoCloseable {
    */
   public SmallD(Config config) {
     this.config = config;
-    this.userAgent = loadUserAgent();
-    this.client = buildHttpClient(config.getClock());
-  }
-
-  private String loadUserAgent() {
-    try {
-      Properties version = new Properties();
-      version.load(getClass().getResourceAsStream("version.properties"));
-      return String.format(
-          "DiscordBot (%s, %s)", version.getProperty("url"), version.getProperty("version"));
-    } catch (IOException e) {
-      throw new SmallDException(e);
-    }
-  }
-
-  private OkHttpClient buildHttpClient(Clock clock) {
-    return new OkHttpClient.Builder()
-        .addInterceptor(new RateLimitInterceptor(clock))
-        .addInterceptor(addHeader("Authorization", () -> "Bot " + getToken()))
-        .addInterceptor(addHeader("User-Agent", this::getUserAgent))
-        .build();
+    this.http = new HttpClient(config);
   }
 
   /**
@@ -130,10 +101,6 @@ public class SmallD implements AutoCloseable {
     return config.getNumberOfShards();
   }
 
-  private String getUserAgent() {
-    return userAgent;
-  }
-
   /** Connect to the Discord gateway. */
   public void connect() {
     String gatewayUrl = getGatewayUrl();
@@ -154,7 +121,7 @@ public class SmallD implements AutoCloseable {
         };
 
     gatewayWebSocket =
-        client.newWebSocket(request, new LoggingWebSocketListener(LOG, onMessageListener));
+        http.newWebSocket(request, new LoggingWebSocketListener(LOG, onMessageListener));
   }
 
   /** Wait for close. Blocks the current thread until it is. */
@@ -172,8 +139,7 @@ public class SmallD implements AutoCloseable {
       gatewayWebSocket.close(1000, "Closed.");
     }
 
-    client.dispatcher().executorService().shutdown();
-    client.connectionPool().evictAll();
+    http.close();
 
     closeGate.countDown();
   }
@@ -231,7 +197,7 @@ public class SmallD implements AutoCloseable {
   public String get(String path) {
     LOG.debug("HTTP GET {}", path);
 
-    return sendRequest(path, Request.Builder::get);
+    return http.send(path, b -> b.get());
   }
 
   /**
@@ -258,7 +224,7 @@ public class SmallD implements AutoCloseable {
 
     return isMultipart
         ? postMultipart(path, payload, attachments)
-        : sendRequest(path, b -> b.post(jsonBody(payload)));
+        : http.send(path, b -> b.post(jsonBody(payload)));
   }
 
   private String postMultipart(String path, String payload, Attachment... attachments) {
@@ -274,7 +240,7 @@ public class SmallD implements AutoCloseable {
           RequestBody.create(MediaType.get(a.getMimeType()), a.getBytes()));
     }
 
-    return sendRequest(path, b -> b.post(builder.build()));
+    return http.send(path, b -> b.post(builder.build()));
   }
 
   /**
@@ -294,7 +260,7 @@ public class SmallD implements AutoCloseable {
   public String put(String path, String payload) {
     LOG.debug("HTTP PUT {}: {}", path, payload);
 
-    return sendRequest(path, b -> b.put(jsonBody(payload)));
+    return http.send(path, b -> b.put(jsonBody(payload)));
   }
 
   /**
@@ -314,7 +280,7 @@ public class SmallD implements AutoCloseable {
   public String patch(String path, String payload) {
     LOG.debug("HTTP PATCH {}: {}", path, payload);
 
-    return sendRequest(path, b -> b.patch(jsonBody(payload)));
+    return http.send(path, b -> b.patch(jsonBody(payload)));
   }
 
   /**
@@ -333,7 +299,7 @@ public class SmallD implements AutoCloseable {
   public String delete(String path) {
     LOG.debug("HTTP DELETE {}", path);
 
-    return sendRequest(path, Request.Builder::delete);
+    return http.send(path, b -> b.delete());
   }
 
   private String getGatewayUrl() {
@@ -352,38 +318,6 @@ public class SmallD implements AutoCloseable {
 
   private RequestBody jsonBody(String content) {
     return RequestBody.create(JSON, content);
-  }
-
-  private String sendRequest(String path, UnaryOperator<Request.Builder> build) {
-    Request.Builder builder = new Request.Builder().url(config.getBaseUrl() + path);
-
-    return sendRequest(build.apply(builder).build());
-  }
-
-  private String sendRequest(Request request) {
-    try (Response response = client.newCall(request).execute()) {
-      int code = response.code();
-      String status = response.message();
-      String body = response.body().string();
-
-      LOG.debug("HTTP Response: [{} {}] {}", code, status, body);
-
-      if (response.code() >= 500) {
-        throw new HttpException.ServerException(code, status, body);
-      } else if (response.code() >= 400) {
-        throw new HttpException.ClientException(code, status, body);
-      } else if (!response.isSuccessful()) {
-        throw new HttpException(code, status, body);
-      }
-
-      return body;
-    } catch (IOException e) {
-      throw new SmallDException(e);
-    }
-  }
-
-  private static final Interceptor addHeader(String name, Supplier<String> valueSupplier) {
-    return c -> c.proceed(c.request().newBuilder().header(name, valueSupplier.get()).build());
   }
 
   /**

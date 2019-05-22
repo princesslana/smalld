@@ -370,31 +370,7 @@ public class TestSmallD {
   }
 
   @Test
-  public void run_shouldConnect() {
-    server.enqueueConnect();
-
-    server.gateway().onOpen((ws, r) -> ws.send("DUMMY"));
-    subject.onGatewayPayload(m -> subject.close());
-
-    subject.run();
-
-    Assert.thatWithinOneSecond(server::assertConnected);
-  }
-
-  @Test
-  public void run_whenClose_shouldComplete() {
-    server.enqueueConnect();
-
-    server.gateway().onOpen((ws, r) -> ws.send("DUMMY"));
-    subject.onGatewayPayload(m -> subject.close());
-
-    Assert.thatWithinOneSecond(subject::run);
-  }
-
-  @Test
-  public void run_whenNoClose_shouldNotComplete() {
-    server.enqueueConnect();
-
+  public void run_shouldNotComplete() {
     Assert.thatNotWithinOneSecond(subject::run);
   }
 

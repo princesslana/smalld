@@ -145,7 +145,7 @@ public class SmallD implements AutoCloseable {
     closeGate.countDown();
   }
 
-  /** Connect and then await until closed. */
+  /** Run forever. Will attempt to reconnect on errors. */
   public void run() {
     while (true) {
       try {

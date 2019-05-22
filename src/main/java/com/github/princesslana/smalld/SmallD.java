@@ -210,7 +210,7 @@ public class SmallD implements AutoCloseable {
   public String get(String path) {
     LOG.debug("HTTP GET {}", path);
 
-    return http.send(path, b -> b.get());
+    return http.send(path, Request.Builder::get);
   }
 
   /**
@@ -312,7 +312,7 @@ public class SmallD implements AutoCloseable {
   public String delete(String path) {
     LOG.debug("HTTP DELETE {}", path);
 
-    return http.send(path, b -> b.delete());
+    return http.send(path, Request.Builder::delete);
   }
 
   private String getGatewayUrl() {

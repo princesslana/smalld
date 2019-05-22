@@ -8,6 +8,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -144,10 +145,22 @@ public class SmallD implements AutoCloseable {
     closeGate.countDown();
   }
 
-  /** Connect and then await until closed. */
+  /** Run forever. Will attempt to reconnect on errors. */
   public void run() {
-    connect();
-    await();
+    while (true) {
+      try {
+        connect();
+        await();
+      } catch (SmallDException e) {
+        LOG.warn("Exception during run", e);
+      }
+
+      try {
+        TimeUnit.SECONDS.sleep(5);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 
   /**

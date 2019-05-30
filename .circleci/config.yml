@@ -48,6 +48,10 @@ jobs:
     <<: *build
     docker:
       - image: maven:3-amazoncorretto-8
+  corretto11:
+    <<: *build
+    docker:
+      - image: maven:3-amazoncorretto-11
   sonarcloud:
     docker:
       - image: maven:3-jdk-8
@@ -127,6 +131,12 @@ workflows:
           filters:
             tags:
               only: /.*/
+      - corretto11:
+          requires:
+            - dependency_cache
+          filters:
+            tags:
+              only: /.*/
       - sonarcloud:
           requires:
             - java8
@@ -145,6 +155,7 @@ workflows:
             - java11
             - java12
             - corretto8
+            - corretto11
           filters:
             branches:
               ignore: /.*/

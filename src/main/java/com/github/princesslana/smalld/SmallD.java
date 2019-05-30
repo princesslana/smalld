@@ -3,6 +3,7 @@ package com.github.princesslana.smalld;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -368,28 +369,28 @@ public class SmallD implements AutoCloseable {
   /**
    * Runs an instance with the given token and initialized with the given {@link Consumer}.
    *
-   * <p>Creates an instance and passes it to the {@link Consumer} to allow setup of a bot. Then
+   * <p>Creates an instance and passes it to the {@link Consumer}s to allow setup of a bot. Then
    * {@link #run()} is called.
    *
    * @param token the token to authenticate with
-   * @param bot code to setup the bot to run
+   * @param bots code to setup the bot to run
    */
-  public static void run(String token, Consumer<SmallD> bot) {
-    run(Config.builder().setToken(token).build(), bot);
+  public static void run(String token, Consumer<SmallD>... bots) {
+    run(Config.builder().setToken(token).build(), bots);
   }
 
   /**
    * Runs an instance with the given config and initialized with the given {@link Consumer}.
    *
-   * <p>Creates an instance and passes it to the {@link Consumer} to allow setup of a bot. Then
+   * <p>Creates an instance and passes it to the {@link Consumer}s to allow setup of a bot. Then
    * {@link #run()} is called.
    *
    * @param config the config to use
-   * @param bot code to setup the bot to run
+   * @param bots code to setup the bot to run
    */
-  public static void run(Config config, Consumer<SmallD> bot) {
+  public static void run(Config config, Consumer<SmallD>... bots) {
     try (SmallD smalld = create(config)) {
-      bot.accept(smalld);
+      Arrays.stream(bots).forEach(b -> b.accept(smalld));
       smalld.run();
     }
   }

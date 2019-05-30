@@ -11,8 +11,9 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 /**
- * A bot that will respond to {@code ++cat} with a random cat image. Cats are returned from {@link
- * http://aws.random.cat/meow}. The images are sent as attachments to a discord message.
+ * A bot that will respond to {@code ++cat} with a random cat image. Cats are returned from <a
+ * href="http://aws.random.cat/meow">http://aws.random.cat/meow</a>. The images are sent as
+ * attachments to a discord message.
  */
 public class CatBot {
 

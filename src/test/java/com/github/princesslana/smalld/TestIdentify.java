@@ -37,7 +37,7 @@ public class TestIdentify {
 
     smalld = server.newSmallD();
 
-    new Identify(smalld, new SequenceNumber(smalld));
+    new Identify(new SequenceNumber(smalld)).accept(smalld);
   }
 
   @AfterEach
@@ -106,7 +106,7 @@ public class TestIdentify {
   public void subject_whenShardSet_shouldSendShardDetail() {
     SmallD smalld = server.newSmallD(cfg -> cfg.setShard(2, 5));
 
-    new Identify(smalld, new SequenceNumber(smalld));
+    new Identify(new SequenceNumber(smalld)).accept(smalld);
 
     server.gateway().onOpen(SEND_HELLO);
 

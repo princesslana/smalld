@@ -359,8 +359,8 @@ public class SmallD implements AutoCloseable {
     SmallD smalld = new SmallD(config);
 
     SequenceNumber seq = new SequenceNumber(smalld);
-    new Identify(smalld, seq);
-    new Heartbeat(smalld, seq);
+    new Identify(seq).accept(smalld);
+    new Heartbeat(seq).accept(smalld);
 
     return smalld;
   }

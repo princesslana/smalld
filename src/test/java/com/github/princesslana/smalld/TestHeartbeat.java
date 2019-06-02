@@ -21,7 +21,10 @@ public class TestHeartbeat {
 
     smalld = server.newSmallD();
 
-    new Heartbeat(new SequenceNumber(smalld)).accept(smalld);
+    SequenceNumber seq = new SequenceNumber();
+    Heartbeat h = new Heartbeat(seq);
+    
+    seq.andThen(h).accept(smalld);
   }
 
   @AfterEach

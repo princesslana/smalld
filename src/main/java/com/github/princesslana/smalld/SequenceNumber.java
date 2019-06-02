@@ -4,18 +4,15 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /** Tracks the last seen sequence number. */
-public class SequenceNumber {
+public class SequenceNumber implements Consumer<SmallD> {
 
   private Optional<Long> lastSeen = Optional.empty();
 
-  /**
-   * Construct an instance that will listen to payloads from the given {@link SmallD}.
-   *
-   * @param smalld the {@link SmallD} to listen for payloads from.
-   */
-  public SequenceNumber(SmallD smalld) {
+  @Override
+  public void accept(SmallD smalld) {
     smalld.onGatewayPayload(
         s -> {
           JsonObject p = Json.parse(s).asObject();

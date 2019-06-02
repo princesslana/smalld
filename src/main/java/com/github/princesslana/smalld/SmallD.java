@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.Request;
@@ -358,9 +359,11 @@ public class SmallD implements AutoCloseable {
   public static SmallD create(Config config) {
     SmallD smalld = new SmallD(config);
 
-    SequenceNumber seq = new SequenceNumber(smalld);
-    new Identify(seq).accept(smalld);
-    new Heartbeat(seq).accept(smalld);
+    SequenceNumber seq = new SequenceNumber();
+    Identify identify = new Identify(seq);
+    Heartbeat heartbeat = new Heartbeat(seq);
+
+    Stream.of(seq, identify, heartbeat).forEach(c -> c.accept(smalld));
 
     return smalld;
   }

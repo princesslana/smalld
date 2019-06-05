@@ -23,7 +23,7 @@ public class TestHeartbeat {
 
     SequenceNumber seq = new SequenceNumber();
     Heartbeat h = new Heartbeat(seq);
-    
+
     seq.andThen(h).accept(smalld);
   }
 

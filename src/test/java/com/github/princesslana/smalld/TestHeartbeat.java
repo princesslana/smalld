@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Test;
 
 public class TestHeartbeat {
 
-  private Heartbeat subject;
-
   private SmallD smalld;
 
   private MockDiscordServer server;
@@ -23,7 +21,10 @@ public class TestHeartbeat {
 
     smalld = server.newSmallD();
 
-    subject = new Heartbeat(smalld, new SequenceNumber(smalld));
+    SequenceNumber seq = new SequenceNumber();
+    Heartbeat h = new Heartbeat(seq);
+
+    seq.andThen(h).accept(smalld);
   }
 
   @AfterEach

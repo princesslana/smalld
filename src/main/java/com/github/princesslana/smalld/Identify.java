@@ -4,35 +4,35 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Identifies with the Discord Gateway. When a HELLO event is received it will send an IDENTIFY or
  * RESUME payload as necessary.
  */
-public class Identify {
-
-  private final SmallD smalld;
+public class Identify implements Consumer<SmallD> {
 
   private final SequenceNumber sequenceNumber;
 
   private Optional<String> sessionId = Optional.empty();
 
   /**
-   * Constructs an instance that will listen and identify via the provided {@link SmallD}.
+   * Constructs an instance that will identify and resume as appropriate.
    *
-   * @param smalld the {@link SmallD} to listen and send payloads through
    * @param sequenceNumber source for obtaining the last seen sequence number
    */
-  public Identify(SmallD smalld, SequenceNumber sequenceNumber) {
-    this.smalld = smalld;
+  public Identify(SequenceNumber sequenceNumber) {
     this.sequenceNumber = sequenceNumber;
+  }
 
+  @Override
+  public void accept(SmallD smalld) {
     smalld.onGatewayPayload(
         s -> {
           JsonObject p = Json.parse(s).asObject();
 
           if (p.getInt("op", -1) == 10) {
-            onHello();
+            onHello(smalld);
           }
 
           JsonValue t = p.get("t");
@@ -43,17 +43,17 @@ public class Identify {
         });
   }
 
-  private void onHello() {
+  private void onHello(SmallD smalld) {
     JsonObject payload =
         sequenceNumber
             .getLastSeen()
-            .flatMap(seq -> sessionId.map(sid -> resume(seq, sid)))
-            .orElse(identify());
+            .flatMap(seq -> sessionId.map(sid -> resume(smalld, seq, sid)))
+            .orElse(identify(smalld));
 
     smalld.sendGatewayPayload(payload.toString());
   }
 
-  private JsonObject identify() {
+  private JsonObject identify(SmallD smalld) {
     JsonObject properties =
         Json.object()
             .add("$os", System.getProperty("os.name"))
@@ -72,7 +72,7 @@ public class Identify {
     return Json.object().add("op", 2).add("d", d);
   }
 
-  private JsonObject resume(Long seq, String session) {
+  private JsonObject resume(SmallD smalld, Long seq, String session) {
     JsonObject d =
         Json.object().add("token", smalld.getToken()).add("session_id", session).add("seq", seq);
 

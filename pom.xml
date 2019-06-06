@@ -61,8 +61,6 @@
     <plugin.jacoco.version>0.8.2</plugin.jacoco.version>
     <plugin.javadoc.version>3.0.1</plugin.javadoc.version>
     <plugin.nexus-staging.version>1.6.8</plugin.nexus-staging.version>
-    <plugin.pitest.version>1.4.3</plugin.pitest.version>
-    <plugin.pitest-junit5.version>0.7</plugin.pitest-junit5.version>
     <plugin.pmd.version>3.9.0</plugin.pmd.version>
     <plugin.project-info-reports.version>2.9</plugin.project-info-reports.version>
     <plugin.resources.version>3.1.0</plugin.resources.version>
@@ -335,50 +333,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-install-plugin</artifactId>
         <version>${plugin.install.version}</version>
-      </plugin>
-      <plugin>
-        <groupId>org.pitest</groupId>
-        <artifactId>pitest-maven</artifactId>
-        <version>${plugin.pitest.version}</version>
-        <executions>
-          <execution>
-            <phase>verify</phase>
-            <goals>
-              <goal>mutationCoverage</goal>
-            </goals>
-          </execution>
-        </executions>
-        <dependencies>
-          <dependency>
-            <groupId>org.pitest</groupId>
-            <artifactId>pitest-junit5-plugin</artifactId>
-            <version>${plugin.pitest-junit5.version}</version>
-          </dependency>
-        </dependencies>
-        <configuration>
-          <skip>${skipTests}</skip>
-          <coverageThreshold>80</coverageThreshold>
-          <mutators>
-            <mutator>CONDITIONALS_BOUNDARY</mutator>
-            <mutator>EMPTY_RETURNS</mutator>
-            <mutator>EXPERIMENTAL_MEMBER_VARIABLE</mutator>
-            <mutator>FALSE_RETURNS</mutator>
-            <mutator>INCREMENTS</mutator>
-            <mutator>INVERT_NEGS</mutator>
-            <mutator>MATH</mutator>
-            <mutator>NEGATE_CONDITIONALS</mutator>
-            <mutator>PRIMITIVE_RETURNS</mutator>
-            <mutator>REMOVE_CONDITIONALS</mutator>
-            <mutator>RETURN_VALS</mutator>
-            <mutator>TRUE_RETURNS</mutator>
-            <mutator>VOID_METHOD_CALLS</mutator>
-          </mutators>
-          <excludedClasses>
-            <excludedClass>com.github.princesslana.smalld.examples.*</excludedClass>
-          </excludedClasses>
-          <mutationThreshold>80</mutationThreshold>
-          <timestampedReports>false</timestampedReports>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

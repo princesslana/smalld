@@ -1,5 +1,6 @@
-package com.github.princesslana.smalld;
+package com.github.princesslana.smalld.ratelimit;
 
+import com.github.princesslana.smalld.SmallDException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Objects;

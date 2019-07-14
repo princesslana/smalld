@@ -203,7 +203,8 @@ public class SmallD implements AutoCloseable {
    *
    * @param path the path to make the request to
    * @return the body of the HTTP response
-   * @throws RateLimitException if the request was rate limited
+   * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
+   *     limited
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
@@ -226,7 +227,8 @@ public class SmallD implements AutoCloseable {
    * @param payload the body to be sent with the request
    * @param attachments attachments for a multipart request
    * @return the body of the HTTP response
-   * @throws RateLimitException if the request was rate limited
+   * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
+   *     limited
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
@@ -266,7 +268,8 @@ public class SmallD implements AutoCloseable {
    * @param path the path to make the request to
    * @param payload the body to be sent with the request
    * @return the body of the HTTP response
-   * @throws RateLimitException if the request was rate limited
+   * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
+   *     limited
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
@@ -286,7 +289,8 @@ public class SmallD implements AutoCloseable {
    * @param path the path to make the request to
    * @param payload the body to be sent with the request
    * @return the body of the HTTP response
-   * @throws RateLimitException if the request was rate limited
+   * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
+   *     limited
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
@@ -305,7 +309,8 @@ public class SmallD implements AutoCloseable {
    *
    * @param path the path to make the request to
    * @return the body of the HTTP response
-   * @throws RateLimitException if the request was rate limited
+   * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
+   *     limited
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse

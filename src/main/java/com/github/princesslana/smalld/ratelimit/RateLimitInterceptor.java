@@ -1,4 +1,4 @@
-package com.github.princesslana.smalld;
+package com.github.princesslana.smalld.ratelimit;
 
 import java.io.IOException;
 import java.time.Clock;

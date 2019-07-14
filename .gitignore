@@ -1,4 +1,5 @@
 .token
+tags
 target
 docs/.bundle
 docs/_site

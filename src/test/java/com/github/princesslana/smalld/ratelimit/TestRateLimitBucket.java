@@ -1,4 +1,4 @@
-package com.github.princesslana.smalld;
+package com.github.princesslana.smalld.ratelimit;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;

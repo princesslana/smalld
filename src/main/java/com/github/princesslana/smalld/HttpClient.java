@@ -1,5 +1,6 @@
 package com.github.princesslana.smalld;
 
+import com.github.princesslana.smalld.ratelimit.RateLimitInterceptor;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.function.Supplier;
@@ -84,7 +85,8 @@ public class HttpClient implements AutoCloseable {
    * @param path path to send the request to
    * @param build UnaryOperator to allow building of the request
    * @return the body of the HTTP response
-   * @throws RateLimitException if the request was rate limited
+   * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
+   *     limited
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse

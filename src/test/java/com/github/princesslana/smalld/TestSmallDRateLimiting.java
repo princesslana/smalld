@@ -1,5 +1,6 @@
 package com.github.princesslana.smalld;
 
+import com.github.princesslana.smalld.ratelimit.RateLimitException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import okhttp3.mockwebserver.MockResponse;

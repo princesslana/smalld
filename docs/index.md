@@ -52,13 +52,15 @@ To run these you will need to setup your bot token in the `SMALLD_TOKEN` environ
 Then:
 
 ```bash
-$ mvn compile exec:java -Dexec.mainClass=com.github.princesslana.smalld.examples.<classname>
+$ mvn compile exec:java \
+    -Dexec.mainClass=com.github.princesslana.smalld.examples.<classname>
 ```
 
 For example, to run PingBot:
 
 ```bash
-$ mvn compile exec:java -Dexec.mainClass=com.github.princesslana.smalld.examples.PingBot
+$ mvn compile exec:java \
+    -Dexec.mainClass=com.github.princesslana.smalld.examples.PingBot
 ```
 
 ## Contributing

@@ -7,18 +7,20 @@ SmallD takes care of the just the necessities of communicating with the Discord 
 a large amount of flexibility in the developer's hands.
 
 Features considered in scope:
+
 * Authentication, Identifying, Resuming
 * Hearbeat
 * Rate Limiting
 
 Features considered out of scope:
+
 * Serialization or deserialization os JSON messages/payloads
 * Caching
 
 
 ## Usage
 
-If you wish to jump right in check out the [Getting Started](getting_started.html) guide.
+If you wish to jump right in check out the [Getting Started](getting_started.md) guide.
 
 For reference there's the [Javadocs](https://www.javadoc.io/doc/com.github.princesslana/smalld) and
 always keep the [Discord Developer Documentation](https://discordapp.com/developers/docs/intro) handy.

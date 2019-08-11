@@ -18,7 +18,7 @@ Features considered out of scope:
 
 ## Usage
 
-Also see https://princesslana.github.io/smalld.
+Also see https://smalld.readthedocs.io.
 
 **Latest Release:** 
 ![Maven Central](https://img.shields.io/maven-central/v/com.github.princesslana/smalld.svg)

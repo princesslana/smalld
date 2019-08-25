@@ -17,10 +17,17 @@ Features considered out of scope:
 * Serialization or deserialization os JSON messages/payloads
 * Caching
 
+## Multi-Language
+
+The flexibility provided by the minimal API means SmallD is ideal for using from non-Java JVM
+languages.
+As such, there are examples of using SmallD from many languages included in this documentation.
+
+There are getting started guides for:
+
+* [Java](getting_started/java.md)
 
 ## Usage
-
-If you wish to jump right in check out the [Getting Started](getting_started.md) guide.
 
 For reference there's the [Javadocs](https://www.javadoc.io/doc/com.github.princesslana/smalld) and
 always keep the [Discord Developer Documentation](https://discordapp.com/developers/docs/intro) handy.
@@ -64,6 +71,9 @@ For example, to run PingBot:
 $ mvn compile exec:java \
     -Dexec.mainClass=com.github.princesslana.smalld.examples.PingBot
 ```
+
+There is also the [SmallD Examples](https://github.com/princesslana/smalld-examples) repository
+that contains additional examples of using SmallD.
 
 ## Contributing
 

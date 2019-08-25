@@ -6,6 +6,8 @@ dev_addr: 0.0.0.0:8000
 
 nav:
   - Overview: index.md
-  - "Getting Started": getting_started.md
+  - "Getting Started":
+    - Java: getting_started/java.md
+    - Ruby: getting_started/ruby.md
   - Javadoc: https://www.javadoc.io/doc/com.github.princesslana/smalld
   - GitHub: https://github.com/princesslana/smalld

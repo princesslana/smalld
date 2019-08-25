@@ -6,9 +6,9 @@ This bot will respond with the message "pong" when a user sends "++ping".
 
 To complete this project you should already have a token for your bot account.
 To run your bot you should have invited it to a server also.
-The fine folks of [discord.py](https://discordpy.readthedocs.io/en/rewrite/) have a write up on how to do that [on their site](https://discordpy.readthedocs.io/en/rewrite/discord.html)
+The fine folks of [discord.py](https://discordpy.readthedocs.io/) have a write up on how to do that [on their site](https://discordpy.readthedocs.io/en/latest/discord.html)
 
-The full code, as will be completed by the end of this guide, is available on [GitHub](https://github.com/princesslana/smalld-gettingstarted)
+The full code, as will be completed by the end of this guide, is available on [GitHub](https://github.com/princesslana/smalld-gettingstarted/tree/master/java)
 
 
 ## Setup
@@ -19,11 +19,12 @@ We'll just go for good 'ol "Hello World" to make sure we can compile and run suc
 
 The first thing we do is setup our maven file.
 In this file we:
+
 * Setup the basic details of our project, such as its name (`artifactId`)
 * Tell maven we're using Java 8 (feel free to use 11 or other versions if you wish)
 * Add two dependencies
-  * SmallD, of course. Update the version to be the latest: ![Maven Central](https://img.shields.io/maven-central/v/com.github.princesslana/smalld.svg)
-  * minimal-json, as we'll need to parse JSON. You may like to use
+    * SmallD, of course. Update the version to be the latest: ![Maven Central](https://img.shields.io/maven-central/v/com.github.princesslana/smalld.svg)
+    * minimal-json, as we'll need to parse JSON. You may like to use
     [Jackson](https://github.com/FasterXML/jackson) or
     [Gson](https://github.com/google/gson) for your own project
 * Add the exec plugin. This allows us to run our bot via Maven
@@ -227,7 +228,7 @@ able to make it respond by sending a `ping` message.
 $ mvn compile exec:java -Dsmalld.token=<insert your token here>
 ```
 
-If it does not work as you expecte take a check of the [GitHub repo](https://github.com/princesslana/smalld-gettingstarted) to compare it to your code, and if that doesn't work feel free to get in touchvia the details [here.](https://github.com/princesslana/smalld/blob/master/CONTRIBUTING.md)
+If it does not work as you expecte take a check of the [GitHub repo](https://github.com/princesslana/smalld-gettingstarted/tree/master/java) to compare it to your code, and if that doesn't work feel free to get in touch via the details [here.](https://github.com/princesslana/smalld/blob/master/CONTRIBUTING.md)
 
 Happy Coding!
 

@@ -1,4 +1,5 @@
-# SmallD
+
+![SmallD](logo.png)
 
 SmallD is a minimalist Java library for making [Discord](https://discordapp.com) bots.
 It doesn't aim to hide the Discord API from the developer, but instead to expose it for

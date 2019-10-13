@@ -14,7 +14,7 @@ Features considered in scope:
 
 Features considered out of scope:
 
-* Serialization or deserialization os JSON messages/payloads
+* Serialization and deserialization of JSON messages/payloads
 * Caching
 
 ## Multi-Language
@@ -26,6 +26,7 @@ As such, there are examples of using SmallD from many languages included in this
 There are getting started guides for:
 
 * [Java](getting_started/java.md)
+* [Ruby](getting_started/ruby.md)
 
 ## Usage
 

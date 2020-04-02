@@ -2,8 +2,8 @@ package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -13,10 +13,11 @@ import java.util.function.Consumer;
  */
 public class Heartbeat implements Consumer<SmallD> {
 
-  private final ScheduledExecutorService heartbeatExecutor =
-      Executors.newSingleThreadScheduledExecutor(SmallD.DAEMON_THREAD_FACTORY);
+  private final ScheduledThreadPoolExecutor heartbeatExecutor;
 
   private final SequenceNumber sequenceNumber;
+
+  private ScheduledFuture<?> heartbeat;
 
   /**
    * Constructs an instance that will send heartbeats.
@@ -25,6 +26,9 @@ public class Heartbeat implements Consumer<SmallD> {
    */
   public Heartbeat(SequenceNumber sequenceNumber) {
     this.sequenceNumber = sequenceNumber;
+
+    heartbeatExecutor = new ScheduledThreadPoolExecutor(0, SmallD.DAEMON_THREAD_FACTORY);
+    heartbeatExecutor.setRemoveOnCancelPolicy(true);
   }
 
   @Override
@@ -40,10 +44,15 @@ public class Heartbeat implements Consumer<SmallD> {
   }
 
   private void onHello(SmallD smalld, JsonObject d) {
+    if (heartbeat != null) {
+      heartbeat.cancel(true);
+    }
+
     long interval = d.getInt("heartbeat_interval", -1);
 
-    heartbeatExecutor.scheduleAtFixedRate(
-        () -> sendHeartbeat(smalld), interval, interval, TimeUnit.MILLISECONDS);
+    heartbeat =
+        heartbeatExecutor.scheduleAtFixedRate(
+            () -> sendHeartbeat(smalld), interval, interval, TimeUnit.MILLISECONDS);
   }
 
   private void sendHeartbeat(SmallD smalld) {

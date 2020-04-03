@@ -4,6 +4,7 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -31,14 +32,26 @@ public class Identify implements Consumer<SmallD> {
         s -> {
           JsonObject p = Json.parse(s).asObject();
 
-          if (p.getInt("op", -1) == 10) {
-            onHello(smalld);
-          }
-
+          int op = p.getInt("op", -1);
           JsonValue t = p.get("t");
 
-          if (t != null && t.isString() && t.asString().equals("READY")) {
-            onReady(p.get("d").asObject());
+          switch (op) {
+            case 0:
+              if (t != null && t.isString() && t.asString().equals("READY")) {
+                onReady(p.get("d").asObject());
+              }
+              break;
+
+            case 9:
+              onInvalidSession(smalld);
+              break;
+
+            case 10:
+              onHello(smalld);
+              break;
+
+            default:
+              // do nothing
           }
         });
   }
@@ -81,5 +94,17 @@ public class Identify implements Consumer<SmallD> {
 
   private void onReady(JsonObject d) {
     this.sessionId = Optional.of(d.get("session_id").asString());
+  }
+
+  private void onInvalidSession(SmallD smalld) {
+    this.sessionId = Optional.empty();
+
+    try {
+      TimeUnit.SECONDS.sleep(2);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+
+    identify(smalld);
   }
 }

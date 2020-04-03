@@ -59,7 +59,7 @@ public class SmallD implements AutoCloseable {
   private final ExecutorService onGatewayPayloadExecutor =
       Executors.newSingleThreadExecutor(DAEMON_THREAD_FACTORY);
 
-  private final CountDownLatch closeGate = new CountDownLatch(1);
+  private CountDownLatch closeGate;
 
   private WebSocket gatewayWebSocket;
 
@@ -128,6 +128,10 @@ public class SmallD implements AutoCloseable {
 
   /** Wait for close. Blocks the current thread until it is. */
   public void await() {
+    if (closeGate == null) {
+      closeGate = new CountDownLatch(1);
+    }
+
     try {
       closeGate.await();
     } catch (InterruptedException e) {
@@ -143,7 +147,10 @@ public class SmallD implements AutoCloseable {
 
     http.close();
 
-    closeGate.countDown();
+    if (closeGate != null) {
+      closeGate.countDown();
+      closeGate = null;
+    }
   }
 
   /** Run forever. Will attempt to reconnect on errors. */

@@ -105,6 +105,6 @@ public class Identify implements Consumer<SmallD> {
       Thread.currentThread().interrupt();
     }
 
-    identify(smalld);
+    smalld.sendGatewayPayload(identify(smalld).toString());
   }
 }

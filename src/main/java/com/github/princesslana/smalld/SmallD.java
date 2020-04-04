@@ -120,6 +120,11 @@ public class SmallD implements AutoCloseable {
           public void onFailure(WebSocket ws, Throwable t, Response r) {
             close();
           }
+
+          @Override
+          public void onClosing(WebSocket ws, int code, String reason) {
+            close();
+          }
         };
 
     gatewayWebSocket =
@@ -143,6 +148,7 @@ public class SmallD implements AutoCloseable {
   public void close() {
     if (gatewayWebSocket != null) {
       gatewayWebSocket.close(1000, "Closed.");
+      gatewayWebSocket = null;
     }
 
     http.close();

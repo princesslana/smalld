@@ -1,6 +1,7 @@
 package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import okhttp3.Response;
 import okhttp3.WebSocket;
@@ -90,6 +91,21 @@ public class TestIdentify {
                     j -> j.node("d.token").isEqualTo(MockDiscordServer.TOKEN),
                     j -> j.node("d.session_id").isEqualTo("abc123"),
                     j -> j.node("d.seq").isEqualTo(1)));
+  }
+
+  @Test
+  public void subject_whenInvalidSessionReceived_shouldSendIdentify() throws InterruptedException {
+    BiConsumer<WebSocket, Response> sendInvalidSession =
+        (ws, r) -> ws.send(Json.object().add("op", 9).toString());
+
+    server.gateway().onOpen(sendInvalidSession);
+
+    server.connect(smalld);
+
+    TimeUnit.SECONDS.sleep(2);
+
+    Assert.thatWithinOneSecond(
+        () -> server.gateway().assertJsonMessage().and(j -> j.node("op").isEqualTo(2)));
   }
 
   @Test

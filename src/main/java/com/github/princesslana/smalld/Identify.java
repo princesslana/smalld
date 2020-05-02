@@ -54,8 +54,6 @@ public class Identify implements Consumer<SmallD> {
   private void onHello(SmallD smalld) {
     Long seq = sequenceNumber.getLastSeen().orElse(null);
 
-    System.out.println("seq:" + seq);
-    System.out.println("sessionId:" + sessionId);
     JsonObject payload =
         seq == null || sessionId == null ? identify(smalld) : resume(smalld, seq, sessionId);
 

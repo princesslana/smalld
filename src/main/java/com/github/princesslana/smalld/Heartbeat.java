@@ -35,10 +35,10 @@ public class Heartbeat implements Consumer<SmallD> {
   public void accept(SmallD smalld) {
     smalld.onGatewayPayload(
         s -> {
-          JsonObject p = Json.parse(s).asObject();
+          GatewayPayload p = GatewayPayload.parse(s);
 
-          if (p.getInt("op", -1) == 10) {
-            onHello(smalld, p.get("d").asObject());
+          if (p.getOp() == GatewayPayload.OP_HELLO) {
+            onHello(smalld, p.getD());
           }
         });
   }
@@ -58,7 +58,7 @@ public class Heartbeat implements Consumer<SmallD> {
   private void sendHeartbeat(SmallD smalld) {
     smalld.sendGatewayPayload(
         Json.object()
-            .add("op", 1)
+            .add("op", GatewayPayload.OP_HEARTBEAT)
             .add("d", sequenceNumber.getLastSeen().map(Json::value).orElse(Json.NULL))
             .toString());
   }

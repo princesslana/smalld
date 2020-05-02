@@ -2,8 +2,6 @@ package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonValue;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -15,7 +13,7 @@ public class Identify implements Consumer<SmallD> {
 
   private final SequenceNumber sequenceNumber;
 
-  private Optional<String> sessionId = Optional.empty();
+  private String sessionId;
 
   /**
    * Constructs an instance that will identify and resume as appropriate.
@@ -30,23 +28,20 @@ public class Identify implements Consumer<SmallD> {
   public void accept(SmallD smalld) {
     smalld.onGatewayPayload(
         s -> {
-          JsonObject p = Json.parse(s).asObject();
+          GatewayPayload p = GatewayPayload.parse(s);
 
-          int op = p.getInt("op", -1);
-          JsonValue t = p.get("t");
-
-          switch (op) {
-            case 0:
-              if (t != null && t.isString() && t.asString().equals("READY")) {
-                onReady(p.get("d").asObject());
+          switch (p.getOp()) {
+            case GatewayPayload.OP_DISPATCH:
+              if (p.isT("READY")) {
+                onReady(p.getD());
               }
               break;
 
-            case 9:
+            case GatewayPayload.OP_INVALID_SESSION:
               onInvalidSession(smalld);
               break;
 
-            case 10:
+            case GatewayPayload.OP_HELLO:
               onHello(smalld);
               break;
 
@@ -57,11 +52,10 @@ public class Identify implements Consumer<SmallD> {
   }
 
   private void onHello(SmallD smalld) {
+    Long seq = sequenceNumber.getLastSeen().orElse(null);
+
     JsonObject payload =
-        sequenceNumber
-            .getLastSeen()
-            .flatMap(seq -> sessionId.map(sid -> resume(smalld, seq, sid)))
-            .orElse(identify(smalld));
+        seq == null || sessionId == null ? identify(smalld) : resume(smalld, seq, sessionId);
 
     smalld.sendGatewayPayload(payload.toString());
   }
@@ -82,22 +76,22 @@ public class Identify implements Consumer<SmallD> {
                 "shard",
                 Json.array().add(smalld.getCurrentShard()).add(smalld.getNumberOfShards()));
 
-    return Json.object().add("op", 2).add("d", d);
+    return Json.object().add("op", GatewayPayload.OP_IDENTIFY).add("d", d);
   }
 
   private JsonObject resume(SmallD smalld, Long seq, String session) {
     JsonObject d =
         Json.object().add("token", smalld.getToken()).add("session_id", session).add("seq", seq);
 
-    return Json.object().add("op", 6).add("d", d);
+    return Json.object().add("op", GatewayPayload.OP_RESUME).add("d", d);
   }
 
   private void onReady(JsonObject d) {
-    this.sessionId = Optional.of(d.get("session_id").asString());
+    this.sessionId = d.get("session_id").asString();
   }
 
   private void onInvalidSession(SmallD smalld) {
-    this.sessionId = Optional.empty();
+    this.sessionId = null;
 
     try {
       TimeUnit.SECONDS.sleep(2);

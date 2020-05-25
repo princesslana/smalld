@@ -134,7 +134,7 @@ You will need to quit running the bot with `<Ctrl-C>`.
 
 Now that we can connect to Discord, we can listen for message created events and respond to those
 that are ping messages.
-To do this we need to understand the [message create](https://discordapp.com/developers/docs/topics/gateway#message-create) event and the [create message](https://discordapp.com/developers/docs/resources/channel#create-message) resource.
+To do this we need to understand the [message create](https://discord.com/developers/docs/topics/gateway#message-create) event and the [create message](https://discord.com/developers/docs/resources/channel#create-message) resource.
 
 The logic we add works as follows:
 

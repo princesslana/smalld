@@ -134,7 +134,7 @@ Finally we can start making our PingBot do something.
 
 We now want to setup a listener for gateway payloads.
 We want it to recognize when a "ping" message is sent and respond by sending a "pong" message.
-To do this we need to understand the [message create](https://discordapp.com/developers/docs/topics/gateway#message-create) event and the [create message](https://discordapp.com/developers/docs/resources/channel#create-message) resource.
+To do this we need to understand the [message create](https://discord.com/developers/docs/topics/gateway#message-create) event and the [create message](https://discord.com/developers/docs/resources/channel#create-message) resource.
 
 We want our listener to:
 * Parse the payload as JSON
@@ -184,7 +184,7 @@ By refering to the Discord API docs we know that this payload should have a `op`
 
 **getMessageContent**
 
-The message create payload is a Discord [message object](https://discordapp.com/developers/docs/resources/channel#message-object).
+The message create payload is a Discord [message object](https://discord.com/developers/docs/resources/channel#message-object).
 So to retrieve the message content, we need to check the `d.content` field of the payload our listener received.
 
 ```java
@@ -206,7 +206,7 @@ Following on from `getMessageContent` we can find the channel id under `d.channe
 **sendPong**
 
 And lastly we get to sending the pong message in reply.
-Checking the Discord documentation for the [create message](https://discordapp.com/developers/docs/resources/channel#create-message) endpoint we see we need to make a POST request.
+Checking the Discord documentation for the [create message](https://discord.com/developers/docs/resources/channel#create-message) endpoint we see we need to make a POST request.
 We'll need to include the channel id in the path and send a JSON payload with "content" being "pong".
 
 ```java

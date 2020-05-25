@@ -1,6 +1,6 @@
 # SmallD
 
-SmallD is a minimalist Java library for making [Discord](https://discordapp.com) bots.
+SmallD is a minimalist Java library for making [Discord](https://discord.com) bots.
 It doesn't aim to hide the Discord API from the developer, but instead to expose it for
 use in a convenient way.
 SmallD takes care of the just the necessities of communicating with the Discord API, leaving
@@ -31,7 +31,7 @@ There are getting started guides for:
 ## Usage
 
 For reference there's the [Javadocs](https://www.javadoc.io/doc/com.github.princesslana/smalld) and
-always keep the [Discord Developer Documentation](https://discordapp.com/developers/docs/intro) handy.
+always keep the [Discord Developer Documentation](https://discord.com/developers/docs/intro) handy.
 
 If you just want to add it to your project right now SmallD is published to maven central.
 So, it can be added with Maven or Gradle as below.

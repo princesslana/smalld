@@ -8,7 +8,7 @@ public class TestConfig {
   @Test
   public void getBaseUrl_whenDefaults_shouldBeV6Url() {
     Config cfg = Config.builder().build();
-    Assertions.assertThat(cfg.getBaseUrl()).isEqualTo("https://discordapp.com/api/v6");
+    Assertions.assertThat(cfg.getBaseUrl()).isEqualTo("https://discord.com/api/v6");
   }
 
   @Test

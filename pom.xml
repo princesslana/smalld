@@ -46,6 +46,7 @@
     <lib.jsonorg.version>20180130</lib.jsonorg.version>
     <lib.junit.version>5.4.0</lib.junit.version>
     <lib.minimal-json.version>0.9.5</lib.minimal-json.version>
+    <lib.mockito.version>3.3.3</lib.mockito.version>
     <lib.okhttp.version>3.12.10</lib.okhttp.version>
     <lib.slf4j.version>1.7.25</lib.slf4j.version>
     <plugin.checkstyle.version>3.0.0</plugin.checkstyle.version>
@@ -126,6 +127,18 @@
       <groupId>com.eclipsesource.minimal-json</groupId>
       <artifactId>minimal-json</artifactId>
       <version>${lib.minimal-json.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${lib.mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <version>${lib.mockito.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>

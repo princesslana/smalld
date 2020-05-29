@@ -2,13 +2,16 @@ package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import net.javacrumbs.jsonunit.assertj.JsonAssertions;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,15 +27,13 @@ public class TestIdentify {
 
   @Mock private SequenceNumber sequenceNumber;
 
-  @Captor private ArgumentCaptor<Consumer<String>> listener;
+  private Consumer<String> listener;
 
   @BeforeEach
   public void subject() {
     subject = new Identify(sequenceNumber);
 
-    subject.accept(smalld);
-
-    Mockito.verify(smalld).onGatewayPayload(listener.capture());
+    listener = capturePayloadListener(subject);
 
     Mockito.lenient().when(smalld.getToken()).thenReturn(MOCK_TOKEN);
     Mockito.lenient().when(smalld.getCurrentShard()).thenReturn(0);
@@ -41,7 +42,7 @@ public class TestIdentify {
 
   @Test
   public void whenReceiveHello_shouldSendIdentify() {
-    sendPayload(Json.object().add("op", GatewayPayload.OP_HELLO).toString());
+    listener.accept(Json.object().add("op", GatewayPayload.OP_HELLO).toString());
 
     String sent = captureSentPayload();
 
@@ -60,14 +61,14 @@ public class TestIdentify {
   public void whenReceiveHelloAfterReady_shouldSendResume() {
     Mockito.when(sequenceNumber.getLastSeen()).thenReturn(Optional.of(42L));
 
-    sendPayload(
+    listener.accept(
         Json.object()
             .add("op", GatewayPayload.OP_DISPATCH)
             .add("t", "READY")
             .add("d", Json.object().add("session_id", "abc123"))
             .toString());
 
-    sendPayload(Json.object().add("op", GatewayPayload.OP_HELLO).toString());
+    listener.accept(Json.object().add("op", GatewayPayload.OP_HELLO).toString());
 
     String sent = captureSentPayload();
 
@@ -79,13 +80,40 @@ public class TestIdentify {
             j -> j.node("d.seq").isEqualTo(42));
   }
 
-  private void sendPayload(String payload) {
-    listener.getValue().accept(payload);
+  @Test
+  public void whenReceiveInvalidSession_shouldWaitAndIdentify()
+      throws InterruptedException, ExecutionException {
+    CompletableFuture.runAsync(
+        () ->
+            listener.accept(Json.object().add("op", GatewayPayload.OP_INVALID_SESSION).toString()));
+
+    CompletableFuture<String> sent = awaitSentPayload();
+
+    Awaitility.await().atLeast(1, TimeUnit.SECONDS).atMost(5, TimeUnit.SECONDS).until(sent::isDone);
+    JsonAssertions.assertThatJson(sent.get()).node("op").isEqualTo(GatewayPayload.OP_IDENTIFY);
+  }
+
+  private Consumer<String> capturePayloadListener(Consumer<SmallD> bot) {
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<Consumer<String>> listener = ArgumentCaptor.forClass(Consumer.class);
+
+    bot.accept(smalld);
+    Mockito.verify(smalld).onGatewayPayload(listener.capture());
+    return listener.getValue();
   }
 
   private String captureSentPayload() {
     ArgumentCaptor<String> sent = ArgumentCaptor.forClass(String.class);
     Mockito.verify(smalld).sendGatewayPayload(sent.capture());
     return sent.getValue();
+  }
+
+  private CompletableFuture<String> awaitSentPayload() {
+    return CompletableFuture.supplyAsync(
+        () -> {
+          ArgumentCaptor<String> sent = ArgumentCaptor.forClass(String.class);
+          Mockito.verify(smalld, Mockito.timeout(10000)).sendGatewayPayload(sent.capture());
+          return sent.getValue();
+        });
   }
 }

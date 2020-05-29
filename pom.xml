@@ -42,6 +42,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <lib.assertj.version>3.10.0</lib.assertj.version>
+    <lib.awaitility.version>4.0.3</lib.awaitility.version>
     <lib.json-unit-assertj.version>2.1.1</lib.json-unit-assertj.version>
     <lib.jsonorg.version>20180130</lib.jsonorg.version>
     <lib.junit.version>5.4.0</lib.junit.version>
@@ -94,6 +95,12 @@
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
       <version>${lib.assertj.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <version>${lib.awaitility.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

@@ -1,108 +1,67 @@
 package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import com.eclipsesource.json.JsonObject;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import net.javacrumbs.jsonunit.assertj.JsonAssertions;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
-public class TestHeartbeat {
+public class TestHeartbeat extends ListenerTest<Heartbeat> {
 
-  private SmallD smalld;
+  @Mock private SequenceNumber sequenceNumber;
 
-  private MockDiscordServer server;
-
-  private static final String HELLO_PAYLOAD =
-      Json.object().add("op", 10).add("d", Json.object().add("heartbeat_interval", 500)).toString();
-
-  @BeforeEach
-  public void subject() {
-    server = new MockDiscordServer();
-    server.enqueueConnect();
-
-    smalld = server.newSmallD();
-
-    SequenceNumber seq = new SequenceNumber();
-    Heartbeat h = new Heartbeat(seq);
-
-    seq.andThen(h).accept(smalld);
-  }
-
-  @AfterEach
-  public void closeSmallD() {
-    smalld.close();
-  }
-
-  @AfterEach
-  public void shutdownServer() {
-    server.close();
+  @Override
+  protected Heartbeat createListener() {
+    return new Heartbeat(sequenceNumber);
   }
 
   @Test
-  public void subject_whenHelloReceived_shouldSendHeartbeat() {
-    server.gateway().onOpen((ws, r) -> ws.send(HELLO_PAYLOAD));
-
-    server.connect(smalld);
-
-    Assert.thatWithinOneSecond(() -> server.gateway().assertJsonMessage().node("op").isEqualTo(1));
+  public void whenHelloReceived_shouldSendHeartbeat() {
+    sendToListener(ready(500));
+    assertHeartbeat(0, 1);
   }
 
   @Test
-  public void subject_whenDispatchReceived_shouldNotSendHeartbeat() {
-    String dispatch =
-        Json.object()
-            .add("op", 0)
-            .add("d", Json.object().add("heartbeat_interval", 500))
-            .toString();
+  public void whenSecondHelloReceived_shouldCancelFirstHeartbeat() {
+    sendToListener(ready(500));
+    assertHeartbeat(0, 1);
 
-    server.gateway().onOpen((ws, r) -> ws.send(dispatch));
-
-    server.connect(smalld);
-
-    Assert.thatNotWithinOneSecond(() -> server.gateway().assertThatNext().isNotNull());
+    sendToListener(ready(2500));
+    assertHeartbeat(2, 3);
   }
 
   @Test
-  public void subject_whenNoSequenceReceivedYet_shouldBeNullInHeartbeat() {
-    server.gateway().onOpen((ws, r) -> ws.send(HELLO_PAYLOAD));
+  public void whenSequenceNumber_shouldBeIncludedInHeartbeat() throws Exception {
+    Mockito.when(sequenceNumber.getLastSeen()).thenReturn(Optional.of(42L));
 
-    server.connect(smalld);
+    sendToListener(ready(500));
 
-    Assert.thatWithinOneSecond(() -> server.gateway().assertJsonMessage().node("d").isNull());
+    String heartbeat = awaitSentPayload().get();
+    JsonAssertions.assertThatJson(heartbeat).node("d").isEqualTo(42);
   }
 
-  @Test
-  public void subject_whenPayloadReceivedWithSequence_shouldIncludeInHeartbeat() {
-    String dispatch = Json.object().add("op", 0).add("s", 0).toString();
-
-    server
-        .gateway()
-        .onOpen(
-            (ws, r) -> {
-              ws.send(HELLO_PAYLOAD);
-              ws.send(dispatch);
-            });
-
-    server.connect(smalld);
-
-    Assert.thatWithinOneSecond(() -> server.gateway().assertJsonMessage().node("d").isEqualTo(0));
+  private JsonObject ready(int interval) {
+    return Json.object().add("op", 10).add("d", Json.object().add("heartbeat_interval", interval));
   }
 
-  @Test
-  public void subject_whenNullSequenceReceived_shouldSendLastSequenceNumber() {
-    String dispatch = Json.object().add("op", 0).add("s", 42).toString();
-    String withNullSequence = Json.object().add("op", 0).add("s", Json.NULL).toString();
-
-    server
-        .gateway()
-        .onOpen(
-            (ws, r) -> {
-              ws.send(HELLO_PAYLOAD);
-              ws.send(dispatch);
-              ws.send(withNullSequence);
-            });
-
-    server.connect(smalld);
-
-    Assert.thatWithinOneSecond(() -> server.gateway().assertJsonMessage().node("d").isEqualTo(42));
+  private void assertHeartbeat(int minSeconds, int maxSeconds) {
+    try {
+      for (int i = 0; i < 3; i++) {
+        CompletableFuture<String> sent = awaitSentPayload();
+        Awaitility.await()
+            .atLeast(minSeconds, TimeUnit.SECONDS)
+            .atMost(maxSeconds, TimeUnit.SECONDS)
+            .until(sent::isDone);
+        JsonAssertions.assertThatJson(sent.get()).node("op").isEqualTo(GatewayPayload.OP_HEARTBEAT);
+      }
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

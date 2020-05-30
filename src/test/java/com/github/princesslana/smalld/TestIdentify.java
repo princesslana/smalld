@@ -1,177 +1,73 @@
 package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import net.javacrumbs.jsonunit.assertj.JsonAssertions;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
-public class TestIdentify {
+public class TestIdentify extends ListenerTest<Identify> {
 
-  private SmallD smalld;
+  @Mock private SequenceNumber sequenceNumber;
 
-  private MockDiscordServer server;
-
-  private static final BiConsumer<WebSocket, Response> SEND_HEARTBEAT =
-      (ws, r) -> ws.send(Json.object().add("op", 1).add("s", Json.NULL).toString());
-
-  private static final BiConsumer<WebSocket, Response> SEND_HELLO =
-      (ws, r) -> ws.send(Json.object().add("op", 10).add("t", Json.NULL).toString());
-
-  private static final BiConsumer<WebSocket, Response> SEND_READY =
-      (ws, r) ->
-          ws.send(
-              Json.object()
-                  .add("op", 0)
-                  .add("s", 1)
-                  .add("t", "READY")
-                  .add("d", Json.object().add("session_id", "abc123"))
-                  .toString());
-
-  @BeforeEach
-  public void subject() {
-    server = new MockDiscordServer();
-    server.enqueueConnect();
-
-    smalld = server.newSmallD();
-
-    SequenceNumber seq = new SequenceNumber();
-    Identify id = new Identify(seq);
-
-    seq.andThen(id).accept(smalld);
-  }
-
-  @AfterEach
-  public void closeSmallD() {
-    smalld.close();
-  }
-
-  @AfterEach
-  public void shutdownServer() {
-    server.close();
+  @Override
+  protected Identify createListener() {
+    return new Identify(sequenceNumber);
   }
 
   @Test
-  public void subject_whenHelloReceived_shouldSendIdentify() {
-    server.gateway().onOpen(SEND_HELLO);
+  public void whenReceiveHello_shouldSendIdentify() {
+    sendToListener(Json.object().add("op", GatewayPayload.OP_HELLO));
 
-    server.connect(smalld);
+    String sent = captureSentPayload();
 
-    Assert.thatWithinOneSecond(
-        () ->
-            server
-                .gateway()
-                .assertJsonMessage()
-                .and(
-                    j -> j.node("op").isEqualTo(2),
-                    j -> j.node("d.token").isEqualTo(MockDiscordServer.TOKEN),
-                    j -> j.node("d.compress").isBoolean().isFalse(),
-                    j -> j.node("d.shard").isArray().containsExactly(0, 1),
-                    j -> j.node("d.properties.$os").isNotNull(),
-                    j -> j.node("d.properties.$device").isEqualTo("SmallD"),
-                    j -> j.node("d.properties.$browser").isEqualTo("SmallD")));
+    JsonAssertions.assertThatJson(sent)
+        .and(
+            j -> j.node("op").isEqualTo(GatewayPayload.OP_IDENTIFY),
+            j -> j.node("d.token").isEqualTo(MOCK_TOKEN),
+            j -> j.node("d.compress").isBoolean().isFalse(),
+            j -> j.node("d.shard").isArray().containsExactly(0, 1),
+            j -> j.node("d.properties.$os").isNotNull(),
+            j -> j.node("d.properties.$device").isEqualTo("SmallD"),
+            j -> j.node("d.properties.$browser").isEqualTo("SmallD"));
   }
 
   @Test
-  public void subject_whenHelloReceivedAfterReady_shouldSendResume() {
-    server.gateway().onOpen(SEND_READY.andThen(SEND_HELLO));
+  public void whenReceiveHelloAfterReady_shouldSendResume() {
+    Mockito.when(sequenceNumber.getLastSeen()).thenReturn(Optional.of(42L));
 
-    server.connect(smalld);
+    sendToListener(
+        Json.object()
+            .add("op", GatewayPayload.OP_DISPATCH)
+            .add("t", "READY")
+            .add("d", Json.object().add("session_id", "abc123")));
 
-    Assert.thatWithinOneSecond(
-        () ->
-            server
-                .gateway()
-                .assertJsonMessage()
-                .and(
-                    j -> j.node("op").isEqualTo(6),
-                    j -> j.node("d.token").isEqualTo(MockDiscordServer.TOKEN),
-                    j -> j.node("d.session_id").isEqualTo("abc123"),
-                    j -> j.node("d.seq").isEqualTo(1)));
+    sendToListener(Json.object().add("op", GatewayPayload.OP_HELLO));
+
+    String sent = captureSentPayload();
+
+    JsonAssertions.assertThatJson(sent)
+        .and(
+            j -> j.node("op").isEqualTo(GatewayPayload.OP_RESUME),
+            j -> j.node("d.token").isEqualTo(MOCK_TOKEN),
+            j -> j.node("d.session_id").isEqualTo("abc123"),
+            j -> j.node("d.seq").isEqualTo(42));
   }
 
   @Test
-  public void subject_whenInvalidSessionReceived_shouldSendIdentify() throws InterruptedException {
-    BiConsumer<WebSocket, Response> sendInvalidSession =
-        (ws, r) -> ws.send(Json.object().add("op", 9).toString());
+  public void whenReceiveInvalidSession_shouldWaitAndIdentify()
+      throws InterruptedException, ExecutionException {
+    CompletableFuture.runAsync(
+        () -> sendToListener(Json.object().add("op", GatewayPayload.OP_INVALID_SESSION)));
 
-    server.gateway().onOpen(sendInvalidSession);
+    CompletableFuture<String> sent = awaitSentPayload();
 
-    server.connect(smalld);
-
-    TimeUnit.SECONDS.sleep(2);
-
-    Assert.thatWithinOneSecond(
-        () -> server.gateway().assertJsonMessage().and(j -> j.node("op").isEqualTo(2)));
-  }
-
-  @Test
-  public void subject_whenSequenceReceivedBeforeSessionId_shouldSendIdentify() {
-    BiConsumer<WebSocket, Response> sendWithSequence =
-        (ws, r) -> ws.send(Json.object().add("op", 0).add("s", 1).toString());
-
-    server.gateway().onOpen(sendWithSequence.andThen(SEND_HELLO));
-
-    server.connect(smalld);
-
-    Assert.thatWithinOneSecond(
-        () -> server.gateway().assertJsonMessage().and(j -> j.node("op").isEqualTo(2)));
-  }
-
-  @Test
-  public void subject_whenShardSet_shouldSendShardDetail() {
-    SmallD smalld = server.newSmallD(cfg -> cfg.setShard(2, 5));
-
-    SequenceNumber seq = new SequenceNumber();
-    Identify id = new Identify(seq);
-
-    seq.andThen(id).accept(smalld);
-
-    server.gateway().onOpen(SEND_HELLO);
-
-    server.connect(smalld);
-
-    Assert.thatWithinOneSecond(
-        () -> server.gateway().assertJsonMessage().node("d.shard").isArray().containsExactly(2, 5));
-  }
-
-  @Test
-  public void subject_whenHeartbeatReceived_shouldSendNothing() {
-    server.gateway().onOpen(SEND_HEARTBEAT);
-
-    server.connect(smalld);
-
-    Assert.thatNotWithinOneSecond(() -> server.gateway().assertThatNext().isNotNull());
-  }
-
-  @Test
-  public void subject_whenNonReadyReceived_shouldIgnoreSessionId() {
-    BiConsumer<WebSocket, Response> sendNonReadySessionId =
-        (ws, r) ->
-            ws.send(
-                Json.object()
-                    .add("op", 0)
-                    .add("s", 1)
-                    .add("t", "OTHER")
-                    .add("d", Json.object().add("session_id", "xyz789"))
-                    .toString());
-
-    server.gateway().onOpen(SEND_READY.andThen(sendNonReadySessionId).andThen(SEND_HELLO));
-
-    server.connect(smalld);
-
-    Assert.thatWithinOneSecond(
-        () ->
-            server
-                .gateway()
-                .assertJsonMessage()
-                .and(
-                    j -> j.node("op").isEqualTo(6),
-                    j -> j.node("d.token").isEqualTo(MockDiscordServer.TOKEN),
-                    j -> j.node("d.session_id").isEqualTo("abc123"),
-                    j -> j.node("d.seq").isEqualTo(1)));
+    Awaitility.await().atLeast(1, TimeUnit.SECONDS).atMost(5, TimeUnit.SECONDS).until(sent::isDone);
+    JsonAssertions.assertThatJson(sent.get()).node("op").isEqualTo(GatewayPayload.OP_IDENTIFY);
   }
 }

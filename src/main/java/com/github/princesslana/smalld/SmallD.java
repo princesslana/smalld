@@ -141,7 +141,7 @@ public class SmallD implements AutoCloseable {
     }
   }
 
-  /** Close the current connection to Discord, clean up resources, and reconnect */
+  /** Close the current connection to Discord, clean up resources, and reconnect. */
   public void reconnect() {
     if (gatewayWebSocket != null) {
       gatewayWebSocket.close(1000, "Closed.");

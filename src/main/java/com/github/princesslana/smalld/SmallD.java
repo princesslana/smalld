@@ -25,11 +25,8 @@ import org.slf4j.LoggerFactory;
  * {@code SmallD} is the entry point for the SmallD API. The methods here can be divided into three
  * categories: Lifecycle, Gateway, and Resources.
  *
- * <p>The Lifecycle methods manage the lifecycle of the connection to Discord. The one that is most
- * likely required is {@link #run()}. {@link #run()} will connect to Discord and block until the
- * connection is closed. If greater control of the connection lifecycle is required the other
- * methods involved in the lifecycle are available to be used as well (e.g., {@link #connect()},
- * {@link #await()}).
+ * <p>The Lifecycle methods manage the lifecycle of the connection to Discord. {@link #run()} will
+ * connect to Discord and block until the {@link #close()} is called.
  *
  * <p>The Gateway methods allow paylods to be sent to Discord and for execution of listeners upon
  * receiving a payload.
@@ -62,6 +59,8 @@ public class SmallD implements AutoCloseable {
   private CountDownLatch closeGate;
 
   private WebSocket gatewayWebSocket;
+
+  private volatile boolean running = false;
 
   /**
    * Construct a {@code SmallD} instance with the provided config.
@@ -103,8 +102,7 @@ public class SmallD implements AutoCloseable {
     return config.getNumberOfShards();
   }
 
-  /** Connect to the Discord gateway. */
-  public void connect() {
+  private void connect() {
     String gatewayUrl = getGatewayUrl();
 
     Request request = new Request.Builder().url(gatewayUrl).build();
@@ -118,12 +116,12 @@ public class SmallD implements AutoCloseable {
 
           @Override
           public void onFailure(WebSocket ws, Throwable t, Response r) {
-            close();
+            reconnect();
           }
 
           @Override
           public void onClosing(WebSocket ws, int code, String reason) {
-            close();
+            reconnect();
           }
         };
 
@@ -131,8 +129,7 @@ public class SmallD implements AutoCloseable {
         http.newWebSocket(request, new LoggingWebSocketListener(LOG, onMessageListener));
   }
 
-  /** Wait for close. Blocks the current thread until it is. */
-  public void await() {
+  private void await() {
     if (closeGate == null) {
       closeGate = new CountDownLatch(1);
     }
@@ -144,8 +141,8 @@ public class SmallD implements AutoCloseable {
     }
   }
 
-  /** Close the connection to Discord and clean up resources. */
-  public void close() {
+  /** Close the current connection to Discord, clean up resources, and reconnect. */
+  public void reconnect() {
     if (gatewayWebSocket != null) {
       gatewayWebSocket.close(1000, "Closed.");
       gatewayWebSocket = null;
@@ -159,9 +156,16 @@ public class SmallD implements AutoCloseable {
     }
   }
 
-  /** Run forever. Will attempt to reconnect on errors. */
+  /** Close the connection, clean up resources, and stop running. */
+  public void close() {
+    running = false;
+    reconnect();
+  }
+
+  /** Run until closed. */
   public void run() {
-    while (true) {
+    running = true;
+    while (running) {
       try {
         connect();
         await();
@@ -169,10 +173,12 @@ public class SmallD implements AutoCloseable {
         LOG.warn("Exception during run", e);
       }
 
-      try {
-        TimeUnit.SECONDS.sleep(5);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+      if (running) {
+        try {
+          TimeUnit.SECONDS.sleep(5);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
   }

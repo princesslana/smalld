@@ -1,6 +1,6 @@
 # SmallD
 
-[![CircleCI](https://circleci.com/gh/princesslana/smalld/tree/master.svg?style=svg)](https://circleci.com/gh/princesslana/smalld/tree/master)
+![Build](https://github.com/princesslana/smalld/workflows/Build/badge.svg)
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=com.github.princesslana%3Asmalld&metric=sqale_index)](https://sonarcloud.io/dashboard?id=com.github.princesslana%3Asmalld)
 [![Code Coverage](https://sonarcloud.io/api/project_badges/measure?project=com.github.princesslana%3Asmalld&metric=coverage)](https://sonarcloud.io/dashboard?id=com.github.princesslana%3Asmalld)
 

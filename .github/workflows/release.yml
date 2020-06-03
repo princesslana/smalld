@@ -21,7 +21,7 @@ jobs:
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
       run: |
-        export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"
+        export SMALLD_VERSION="$(git describe --dirty --tags)"
         export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"
         openssl aes-256-cbc -d -in etc/codesigning.asc.enc -out etc/codesigning.asc -k $FILE_ENCRYPTION_PASSPHRASE
         gpg --batch --fast-import etc/codesigning.asc

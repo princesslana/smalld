@@ -52,36 +52,6 @@ jobs:
     <<: *build
     docker:
       - image: maven:3-amazoncorretto-11
-  deploy_snapshot:
-    docker:
-      - image: maven:3-jdk-8
-    steps:
-      - attach_workspace:
-          at: .
-      - run: |
-          echo 'export SMALLD_VERSION="$(git describe --dirty --tags)-SNAPSHOT"' >> $BASH_ENV
-          echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
-      - run: |
-          openssl aes-256-cbc -d -in etc/codesigning.asc.enc -out etc/codesigning.asc -k $FILE_ENCRYPTION_PASSPHRASE
-          gpg --batch --fast-import etc/codesigning.asc
-      - restore_cache:
-          key: smalld-{{ checksum "pom.xml" }}
-      - run: mvn -s etc/settings.xml -B -DskipTests=true versions:set-property deploy -P release
-  deploy_release:
-    docker:
-      - image: maven:3-jdk-8
-    steps:
-      - attach_workspace:
-          at: .
-      - run: |
-          echo 'export SMALLD_VERSION="$(git describe --dirty --tags)"' >> $BASH_ENV
-          echo 'export MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"' >> $BASH_ENV
-      - run: |
-          openssl aes-256-cbc -d -in etc/codesigning.asc.enc -out etc/codesigning.asc -k $FILE_ENCRYPTION_PASSPHRASE
-          gpg --batch --fast-import etc/codesigning.asc
-      - restore_cache:
-          key: smalld-{{ checksum "pom.xml" }}
-      - run: mvn -s etc/settings.xml -B -DskipTests=true versions:set-property deploy -P release
 
 workflows:
   version: 2
@@ -121,21 +91,3 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - deploy_snapshot:
-          requires:
-            - java8
-          filters:
-            branches:
-              only: master
-      - deploy_release:
-          requires:
-            - java8
-            - java11
-            - java12
-            - corretto8
-            - corretto11
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^\d+\.\d+\.\d+$/

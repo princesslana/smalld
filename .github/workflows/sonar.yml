@@ -14,7 +14,7 @@ jobs:
       with:
         java-version: 1.8
     - run: echo ::set-env name=SMALLD_VERSION:"$(git describe --dirty --tags)-SNAPSHOT"
-    - run: echo ::set-env name=MAVEN_OPTS:"-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"'
+    - run: echo ::set-env name=MAVEN_OPTS:"-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"
     - name: Run SonarCloud
       run: > 
           mvn -B sonar:sonar

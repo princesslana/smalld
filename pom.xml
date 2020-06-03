@@ -60,7 +60,7 @@
     <plugin.gpg.version>1.6</plugin.gpg.version>
     <plugin.install.version>3.0.0-M1</plugin.install.version>
     <plugin.jar.version>3.1.0</plugin.jar.version>
-    <plugin.jacoco.version>0.8.2</plugin.jacoco.version>
+    <plugin.jacoco.version>0.8.5</plugin.jacoco.version>
     <plugin.javadoc.version>3.0.1</plugin.javadoc.version>
     <plugin.nexus-staging.version>1.6.8</plugin.nexus-staging.version>
     <plugin.pmd.version>3.9.0</plugin.pmd.version>
@@ -70,7 +70,7 @@
     <plugin.sortpom.version>2.10.0</plugin.sortpom.version>
     <plugin.source.version>3.0.1</plugin.source.version>
     <plugin.spotless.version>1.16.0</plugin.spotless.version>
-    <plugin.surefire.version>3.0.0-M3</plugin.surefire.version>
+    <plugin.surefire.version>3.0.0-M4</plugin.surefire.version>
   </properties>
   <dependencyManagement>
     <dependencies>

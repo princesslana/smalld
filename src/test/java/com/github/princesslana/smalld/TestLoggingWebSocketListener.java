@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TestLoggingWebSocketListener {
+class TestLoggingWebSocketListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestLoggingWebSocketListener.class);
 
@@ -18,43 +18,43 @@ public class TestLoggingWebSocketListener {
   private WebSocketListener subject;
 
   @BeforeEach
-  public void subject() {
+  void subject() {
     spy = new WebSocketListenerSpy();
     subject = new LoggingWebSocketListener(LOG, spy);
   }
 
   @Test
-  public void onClosed_shouldDelegateToWrapped() {
+  void onClosed_shouldDelegateToWrapped() {
     subject.onClosed(null, 0, null);
     Assertions.assertThat(spy.onClosedCalled).isTrue();
   }
 
   @Test
-  public void onClosing_shouldDelegateToWrapped() {
+  void onClosing_shouldDelegateToWrapped() {
     subject.onClosing(null, 0, null);
     Assertions.assertThat(spy.onClosingCalled).isTrue();
   }
 
   @Test
-  public void onFailure_shouldDelegateToWrapped() {
+  void onFailure_shouldDelegateToWrapped() {
     subject.onFailure(null, null, null);
     Assertions.assertThat(spy.onFailureCalled).isTrue();
   }
 
   @Test
-  public void onMessageByteString_shouldDelegateToWrapped() {
+  void onMessageByteString_shouldDelegateToWrapped() {
     subject.onMessage(null, ByteString.of());
     Assertions.assertThat(spy.onMessageByteStringCalled).isTrue();
   }
 
   @Test
-  public void onMessageString_shouldDelegateToWrapped() {
+  void onMessageString_shouldDelegateToWrapped() {
     subject.onMessage(null, "");
     Assertions.assertThat(spy.onMessageStringCalled).isTrue();
   }
 
   @Test
-  public void onOpen_shouldDelegateToWrapped() {
+  void onOpen_shouldDelegateToWrapped() {
     subject.onOpen(null, null);
     Assertions.assertThat(spy.onOpenCalled).isTrue();
   }

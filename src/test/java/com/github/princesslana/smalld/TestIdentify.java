@@ -31,6 +31,7 @@ public class TestIdentify extends ListenerTest<Identify> {
             j -> j.node("op").isEqualTo(GatewayPayload.OP_IDENTIFY),
             j -> j.node("d.token").isEqualTo(MOCK_TOKEN),
             j -> j.node("d.compress").isBoolean().isFalse(),
+            j -> j.node("d.intents").isEqualTo(GatewayIntent.ALL),
             j -> j.node("d.shard").isArray().containsExactly(0, 1),
             j -> j.node("d.properties.$os").isNotNull(),
             j -> j.node("d.properties.$device").isEqualTo("SmallD"),

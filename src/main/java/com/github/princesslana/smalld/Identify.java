@@ -72,6 +72,7 @@ public class Identify implements Consumer<SmallD> {
             .add("token", smalld.getToken())
             .add("properties", properties)
             .add("compress", false)
+            .add("intents", smalld.getIntents())
             .add(
                 "shard",
                 Json.array().add(smalld.getCurrentShard()).add(smalld.getNumberOfShards()));

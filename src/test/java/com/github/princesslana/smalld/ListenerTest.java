@@ -38,6 +38,7 @@ public abstract class ListenerTest<T extends Consumer<SmallD>> {
     Mockito.lenient().when(smalld.getToken()).thenReturn(MOCK_TOKEN);
     Mockito.lenient().when(smalld.getCurrentShard()).thenReturn(0);
     Mockito.lenient().when(smalld.getNumberOfShards()).thenReturn(1);
+    Mockito.lenient().when(smalld.getIntents()).thenReturn(GatewayIntent.ALL);
   }
 
   protected abstract T createListener();

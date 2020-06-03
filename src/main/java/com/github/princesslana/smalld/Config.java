@@ -10,6 +10,7 @@ public class Config {
   private final int currentShard;
   private final int numberOfShards;
   private final String token;
+  private final int intents;
 
   private Config(Builder builder) {
     baseUrl = builder.baseUrl;
@@ -17,6 +18,7 @@ public class Config {
     currentShard = builder.currentShard;
     numberOfShards = builder.numberOfShards;
     token = builder.token;
+    intents = builder.intents;
   }
 
   /**
@@ -44,6 +46,15 @@ public class Config {
    */
   public int getCurrentShard() {
     return currentShard;
+  }
+
+  /**
+   * Return the bitmask for the {@link GatewayIntent}s that are subscribed to.
+   *
+   * @return the bitasmk for intents that are subscribe to
+   */
+  public int getIntents() {
+    return intents;
   }
 
   /**
@@ -83,6 +94,7 @@ public class Config {
     private int currentShard = 0;
     private int numberOfShards = 1;
     private String token;
+    private int intents = GatewayIntent.ALL;
 
     private Builder() {}
 
@@ -106,6 +118,17 @@ public class Config {
      */
     public Builder setClock(Clock clock) {
       this.clock = clock;
+      return this;
+    }
+
+    /**
+     * Set the {@link GatewayIntent}s to subscribe to.
+     *
+     * @param intents the GatewayIntents to subscribe to
+     * @return this
+     */
+    public Builder setIntents(GatewayIntent... intents) {
+      this.intents = GatewayIntent.toMask(intents);
       return this;
     }
 

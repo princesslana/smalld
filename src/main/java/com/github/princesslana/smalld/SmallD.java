@@ -102,6 +102,10 @@ public class SmallD implements AutoCloseable {
     return config.getNumberOfShards();
   }
 
+  public int getIntents() {
+    return config.getIntents();
+  }
+
   private void connect() {
     String gatewayUrl = getGatewayUrl();
 

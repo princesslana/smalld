@@ -16,4 +16,20 @@ public class TestConfig {
     Config cfg = Config.builder().build();
     Assertions.assertThat(cfg.getClock()).isNotNull();
   }
+
+  @Test
+  public void getIntents_whenDefaults_shouldBeAll() {
+    Config cfg = Config.builder().build();
+    Assertions.assertThat(cfg.getIntents()).isEqualTo(GatewayIntent.ALL);
+  }
+
+  @Test
+  public void getIntents_whenIntentsSet_shouldBeSet() {
+    Config cfg =
+        Config.builder()
+            .setIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES)
+            .build();
+
+    Assertions.assertThat(cfg.getIntents()).isEqualTo(1 << 9 | 1 << 12);
+  }
 }

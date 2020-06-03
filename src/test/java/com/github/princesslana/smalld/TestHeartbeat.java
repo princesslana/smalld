@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-public class TestHeartbeat extends ListenerTest<Heartbeat> {
+class TestHeartbeat extends ListenerTest<Heartbeat> {
 
   @Mock private SequenceNumber sequenceNumber;
 
@@ -22,13 +22,13 @@ public class TestHeartbeat extends ListenerTest<Heartbeat> {
   }
 
   @Test
-  public void whenHelloReceived_shouldSendHeartbeat() {
+  void whenHelloReceived_shouldSendHeartbeat() {
     sendToListener(ready(500));
     assertHeartbeat(0, 1);
   }
 
   @Test
-  public void whenSecondHelloReceived_shouldCancelFirstHeartbeat() {
+  void whenSecondHelloReceived_shouldCancelFirstHeartbeat() {
     sendToListener(ready(500));
     assertHeartbeat(0, 1);
 
@@ -37,7 +37,7 @@ public class TestHeartbeat extends ListenerTest<Heartbeat> {
   }
 
   @Test
-  public void whenSequenceNumber_shouldBeIncludedInHeartbeat() throws Exception {
+  void whenSequenceNumber_shouldBeIncludedInHeartbeat() throws Exception {
     Mockito.when(sequenceNumber.getLastSeen()).thenReturn(Optional.of(42L));
 
     sendToListener(ready(500));

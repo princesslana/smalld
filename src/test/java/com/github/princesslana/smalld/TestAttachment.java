@@ -5,10 +5,10 @@ import java.nio.charset.Charset;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TestAttachment {
+class TestAttachment {
 
   @Test
-  public void getBytes_whenFile_shouldReturnContentsInBytes() throws Exception {
+  void getBytes_whenFile_shouldReturnContentsInBytes() throws Exception {
     Attachment a =
         new Attachment("", null, new File(getClass().getResource("multipart_input.txt").toURI()));
 
@@ -16,7 +16,7 @@ public class TestAttachment {
   }
 
   @Test
-  public void getBytes_whenFileNotFound_shouldThrowSmallDException() {
+  void getBytes_whenFileNotFound_shouldThrowSmallDException() {
     Attachment a = new Attachment("", null, new File("notfound.txt"));
     Assertions.assertThatThrownBy(a::getBytes).isInstanceOf(SmallDException.class);
   }

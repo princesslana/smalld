@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-public class TestIdentify extends ListenerTest<Identify> {
+class TestIdentify extends ListenerTest<Identify> {
 
   @Mock private SequenceNumber sequenceNumber;
 
@@ -21,7 +21,7 @@ public class TestIdentify extends ListenerTest<Identify> {
   }
 
   @Test
-  public void whenReceiveHello_shouldSendIdentify() {
+  void whenReceiveHello_shouldSendIdentify() {
     sendToListener(Json.object().add("op", GatewayPayload.OP_HELLO));
 
     String sent = captureSentPayload();
@@ -39,7 +39,7 @@ public class TestIdentify extends ListenerTest<Identify> {
   }
 
   @Test
-  public void whenReceiveHelloAfterReady_shouldSendResume() {
+  void whenReceiveHelloAfterReady_shouldSendResume() {
     Mockito.when(sequenceNumber.getLastSeen()).thenReturn(Optional.of(42L));
 
     sendToListener(
@@ -61,7 +61,7 @@ public class TestIdentify extends ListenerTest<Identify> {
   }
 
   @Test
-  public void whenReceiveInvalidSession_shouldWaitAndIdentify()
+  void whenReceiveInvalidSession_shouldWaitAndIdentify()
       throws InterruptedException, ExecutionException {
     CompletableFuture.runAsync(
         () -> sendToListener(Json.object().add("op", GatewayPayload.OP_INVALID_SESSION)));

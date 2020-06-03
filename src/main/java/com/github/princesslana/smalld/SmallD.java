@@ -102,6 +102,11 @@ public class SmallD implements AutoCloseable {
     return config.getNumberOfShards();
   }
 
+  /**
+   * Return the bitmask for the {@link GatewayIntent}s that are subscribed to.
+   *
+   * @return the bitasmk for intents that are subscribe to
+   */
   public int getIntents() {
     return config.getIntents();
   }

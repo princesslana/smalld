@@ -2,6 +2,10 @@ package com.github.princesslana.smalld;
 
 import java.util.Arrays;
 
+/**
+ * A GatewayIntent allows us to subscribe to only certain events from the Discord gateway. These are
+ * combined into a bitmask that's sent with identification.
+ */
 public enum GatewayIntent {
   GUILDS(1 << 0),
   GUILD_MEMEBERS(1 << 1),
@@ -27,6 +31,12 @@ public enum GatewayIntent {
     this.mask = mask;
   }
 
+  /**
+   * Combine a number of intents into a bitmask.
+   *
+   * @param intents the intents to include in the bitmask
+   * @return the resulting bitmask from combining these intents
+   */
   public static int toMask(GatewayIntent... intents) {
     return Arrays.stream(intents).mapToInt(g -> g.mask).reduce((x, y) -> x | y).orElse(0);
   }

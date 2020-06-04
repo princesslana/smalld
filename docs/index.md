@@ -78,4 +78,5 @@ that contains additional examples of using SmallD.
 
 ## Contributing
 
-Head over to the [GitHub](https://github.com/princesslana/smalld).
+Head over to the [GitHub](https://github.com/princesslana/smalld) or the
+[Discord Projects Hub](https://discord.gg/3aTVQtz) on Discord.

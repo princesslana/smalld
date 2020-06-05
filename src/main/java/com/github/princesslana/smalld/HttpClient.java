@@ -2,9 +2,11 @@ package com.github.princesslana.smalld;
 
 import com.github.princesslana.smalld.ratelimit.RateLimitInterceptor;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -82,8 +84,13 @@ public class HttpClient implements AutoCloseable {
    * Sends a request build with the builder to the given path. The path is relative to the base url
    * that is retrieved from the {@link Config} provided when the {@code HttpClient} was initialized.
    *
+   * <p>When calling this method you should provide a map of query parameters where the {@code
+   * Object} is a {@link java.lang.String} or can be transformed into a {@link java.lang.String}
+   * with {@link String#valueOf(Object)}.
+   *
    * @param path path to send the request to
    * @param build UnaryOperator to allow building of the request
+   * @param parameters the query string parameters
    * @return the body of the HTTP response
    * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
    *     limited
@@ -91,8 +98,14 @@ public class HttpClient implements AutoCloseable {
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
    */
-  public String send(String path, UnaryOperator<Request.Builder> build) {
-    Request.Builder builder = new Request.Builder().url(config.getBaseUrl() + path);
+  public String send(
+      String path, UnaryOperator<Request.Builder> build, Map<String, Object> parameters) {
+    HttpUrl.Builder urlBuilder = HttpUrl.get(config.getBaseUrl()).newBuilder().addPathSegment(path);
+
+    parameters.forEach(
+        (string, object) -> urlBuilder.addQueryParameter(string, String.valueOf(object)));
+
+    Request.Builder builder = new Request.Builder().url(urlBuilder.build());
 
     return send(build.apply(builder).build());
   }

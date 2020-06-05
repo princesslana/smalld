@@ -3,6 +3,7 @@ package com.github.princesslana.smalld;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -237,11 +238,12 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   * @throws IllegalArgumentException when the given path is malformed
    */
   public String get(String path) {
     LOG.debug("HTTP GET {}", path);
 
-    return http.send(path, Request.Builder::get);
+    return get(path, new HashMap<>());
   }
 
   /**

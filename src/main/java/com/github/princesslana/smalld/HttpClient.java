@@ -105,6 +105,10 @@ public class HttpClient implements AutoCloseable {
    *
    * <p>This send request is invoked when the request sent contains query parameters.
    *
+   * <p>This get request provides should provide a set of query parameters where the {@code Object}
+   * is a {@link java.lang.String} or can be transformed into a {@link java.lang.String} with {@link
+   * String#valueOf(Object)}.
+   *
    * @param path path to send the request to
    * @param build UnaryOperator to allow building of the request
    * @param parameters the query string parameters

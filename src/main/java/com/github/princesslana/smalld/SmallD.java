@@ -250,9 +250,9 @@ public class SmallD implements AutoCloseable {
    * <p>The path provided should start with {@code /} and will be appended to the base URL that has
    * been configured.
    *
-   * <p>This get request provides should provide a set of query parameters where the {@code Object}
-   * is a {@link java.lang.String} or can be transformed into a {@link java.lang.String} with {@link
-   * String#valueOf(Object)}.
+   * <p>When calling this method you should provide a map of query parameters where the {@code
+   * Object} is a {@link java.lang.String} or can be transformed into a {@link java.lang.String}
+   * with {@link String#valueOf(Object)}.
    *
    * @param path the path to make the request to
    * @param parameters the query string parameters
@@ -264,7 +264,7 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
    */
   public String get(String path, Map<String, Object> parameters) {
-    LOG.debug("HTTP GET {}", path);
+    LOG.debug("HTTP GET {}, {}", path, parameters);
 
     return http.send(path, Request.Builder::get, parameters);
   }
@@ -299,9 +299,9 @@ public class SmallD implements AutoCloseable {
    * application/json. If attachments are present the content type will be multipart/form-data and
    * the json payload is included in the part named {@code payload_json}.
    *
-   * <p>This get request provides should provide a set of query parameters where the {@code Object}
-   * is a {@link java.lang.String} or can be transformed into a {@link java.lang.String} with {@link
-   * String#valueOf(Object)}.
+   * <p>When calling this method you should provide a map of query parameters where the {@code
+   * Object} is a {@link java.lang.String} or can be transformed into a {@link java.lang.String}
+   * with {@link String#valueOf(Object)}.
    *
    * @param path the path to make the request to
    * @param payload the body to be sent with the request
@@ -316,7 +316,7 @@ public class SmallD implements AutoCloseable {
    */
   public String post(
       String path, String payload, Map<String, Object> parameters, Attachment... attachments) {
-    LOG.debug("HTTP POST {}: {}", path, payload);
+    LOG.debug("HTTP POST {}: {}, {}", path, payload, parameters);
 
     boolean isMultipart = attachments.length > 0;
 
@@ -366,9 +366,9 @@ public class SmallD implements AutoCloseable {
    * <p>The request will be send with a content type of application/json. The path provided should
    * start with {@code /} and will be appended to the base URL that has been configured.
    *
-   * <p>This get request provides should provide a set of query parameters where the {@code Object}
-   * is a {@link java.lang.String} or can be transformed into a {@link java.lang.String} with {@link
-   * String#valueOf(Object)}.
+   * <p>When calling this method you should provide a map of query parameters where the {@code
+   * Object} is a {@link java.lang.String} or can be transformed into a {@link java.lang.String}
+   * with {@link String#valueOf(Object)}.
    *
    * @param path the path to make the request to
    * @param payload the body to be sent with the request
@@ -381,7 +381,7 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
    */
   public String put(String path, String payload, Map<String, Object> parameters) {
-    LOG.debug("HTTP PUT {}: {}", path, payload);
+    LOG.debug("HTTP PUT {}: {}, {}", path, payload, parameters);
 
     return http.send(path, b -> b.put(jsonBody(payload)), parameters);
   }

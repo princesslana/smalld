@@ -84,11 +84,9 @@ public class HttpClient implements AutoCloseable {
    * Sends a request build with the builder to the given path. The path is relative to the base url
    * that is retrieved from the {@link Config} provided when the {@code HttpClient} was initialized.
    *
-   * <p>This send request is invoked when the request sent contains query parameters.
-   *
-   * <p>This get request provides should provide a set of query parameters where the {@code Object}
-   * is a {@link java.lang.String} or can be transformed into a {@link java.lang.String} with {@link
-   * String#valueOf(Object)}.
+   * <p>When calling this method you should provide a map of query parameters where the {@code
+   * Object} is a {@link java.lang.String} or can be transformed into a {@link java.lang.String}
+   * with {@link String#valueOf(Object)}.
    *
    * @param path path to send the request to
    * @param build UnaryOperator to allow building of the request

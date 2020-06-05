@@ -84,25 +84,6 @@ public class HttpClient implements AutoCloseable {
    * Sends a request build with the builder to the given path. The path is relative to the base url
    * that is retrieved from the {@link Config} provided when the {@code HttpClient} was initialized.
    *
-   * @param path path to send the request to
-   * @param build UnaryOperator to allow building of the request
-   * @return the body of the HTTP response
-   * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
-   *     limited
-   * @throws HttpException.ClientException if there was a HTTP 4xx response
-   * @throws HttpException.ServerException is there was a HTTP 5xx response
-   * @throws HttpException for any non 2xx/4xx/5xx ressponse
-   */
-  public String send(String path, UnaryOperator<Request.Builder> build) {
-    Request.Builder builder = new Request.Builder().url(config.getBaseUrl() + path);
-
-    return send(build.apply(builder).build());
-  }
-
-  /**
-   * Sends a request build with the builder to the given path. The path is relative to the base url
-   * that is retrieved from the {@link Config} provided when the {@code HttpClient} was initialized.
-   *
    * <p>This send request is invoked when the request sent contains query parameters.
    *
    * <p>This get request provides should provide a set of query parameters where the {@code Object}
@@ -128,8 +109,10 @@ public class HttpClient implements AutoCloseable {
     }
     HttpUrl.Builder urlBuilder = baseUrl.newBuilder();
 
-    parameters.forEach(
-        (string, object) -> urlBuilder.addQueryParameter(string, String.valueOf(object)));
+    if (!parameters.isEmpty()) {
+      parameters.forEach(
+          (string, object) -> urlBuilder.addQueryParameter(string, String.valueOf(object)));
+    }
 
     Request.Builder builder = new Request.Builder().url(urlBuilder.build());
 

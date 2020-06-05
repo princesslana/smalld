@@ -3,7 +3,7 @@ package com.github.princesslana.smalld;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.ParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -243,7 +243,7 @@ public class SmallD implements AutoCloseable {
   public String get(String path) {
     LOG.debug("HTTP GET {}", path);
 
-    return get(path, new HashMap<>());
+    return get(path, Collections.emptyMap());
   }
 
   /**
@@ -289,6 +289,7 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   * @throws IllegalArgumentException when the given path is malformed
    */
   public String post(String path, String payload, Attachment... attachments) {
     LOG.debug("HTTP POST {}: {}", path, payload);
@@ -297,7 +298,7 @@ public class SmallD implements AutoCloseable {
 
     return isMultipart
         ? postMultipart(path, payload, attachments)
-        : http.send(path, b -> b.post(jsonBody(payload)));
+        : http.send(path, b -> b.post(jsonBody(payload)), Collections.emptyMap());
   }
 
   private String postMultipart(String path, String payload, Attachment... attachments) {
@@ -313,7 +314,7 @@ public class SmallD implements AutoCloseable {
           RequestBody.create(MediaType.get(a.getMimeType()), a.getBytes()));
     }
 
-    return http.send(path, b -> b.post(builder.build()));
+    return http.send(path, b -> b.post(builder.build()), Collections.emptyMap());
   }
 
   /**
@@ -330,11 +331,12 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   * @throws IllegalArgumentException when the given path is malformed
    */
   public String put(String path, String payload) {
     LOG.debug("HTTP PUT {}: {}", path, payload);
 
-    return http.send(path, b -> b.put(jsonBody(payload)));
+    return http.send(path, b -> b.put(jsonBody(payload)), Collections.emptyMap());
   }
 
   /**
@@ -351,11 +353,12 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   * @throws IllegalArgumentException when the given path is malformed
    */
   public String patch(String path, String payload) {
     LOG.debug("HTTP PATCH {}: {}", path, payload);
 
-    return http.send(path, b -> b.patch(jsonBody(payload)));
+    return http.send(path, b -> b.patch(jsonBody(payload)), Collections.emptyMap());
   }
 
   /**
@@ -371,11 +374,12 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   * @throws IllegalArgumentException when the given path is malformed
    */
   public String delete(String path) {
     LOG.debug("HTTP DELETE {}", path);
 
-    return http.send(path, Request.Builder::delete);
+    return http.send(path, Request.Builder::delete, Collections.emptyMap());
   }
 
   private String getGatewayUrl() {

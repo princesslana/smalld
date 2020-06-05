@@ -103,7 +103,7 @@ public class HttpClient implements AutoCloseable {
    * Sends a request build with the builder to the given path. The path is relative to the base url
    * that is retrieved from the {@link Config} provided when the {@code HttpClient} was initialized.
    *
-   * <p> This send request is invoked when the request sent contains query parameters.
+   * <p>This send request is invoked when the request sent contains query parameters.
    *
    * @param path path to send the request to
    * @param build UnaryOperator to allow building of the request
@@ -118,7 +118,9 @@ public class HttpClient implements AutoCloseable {
    */
   public String send(String path, UnaryOperator<Request.Builder> build, Map<String, Object> parameters) {
     HttpUrl baseUrl = HttpUrl.parse(config.getBaseUrl() + path);
-    if(baseUrl == null) throw new IllegalArgumentException("Illegal argument in path: " + path);
+    if(baseUrl == null) {
+      throw new IllegalArgumentException("Illegal argument in path: " + path);
+    }
     HttpUrl.Builder urlBuilder = baseUrl.newBuilder();
 
     parameters.forEach((string, object) -> urlBuilder.addQueryParameter(string, String.valueOf(object)));

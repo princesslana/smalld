@@ -107,7 +107,7 @@ public class HttpClient implements AutoCloseable {
    *
    * @param path path to send the request to
    * @param build UnaryOperator to allow building of the request
-   * @param parameters Map of query string parameters
+   * @param parameters the query string parameters
    * @return the body of the HTTP response
    * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
    *     limited

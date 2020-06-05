@@ -254,6 +254,7 @@ public class SmallD implements AutoCloseable {
    * {@link java.lang.String} or can be transformed into a {@link java.lang.String} with {@link String#valueOf(Object)}.
    *
    * @param path the path to make the request to
+   * @param parameters the query string parameters
    * @return the body of the HTTP response
    * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
    *     limited

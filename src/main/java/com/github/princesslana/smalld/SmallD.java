@@ -250,8 +250,9 @@ public class SmallD implements AutoCloseable {
    * <p>The path provided should start with {@code /} and will be appended to the base URL that has
    * been configured.
    *
-   * <p>This get request provides should provide a set of query parameters where the {@code Object} is a
-   * {@link java.lang.String} or can be transformed into a {@link java.lang.String} with {@link String#valueOf(Object)}.
+   * <p>This get request provides should provide a set of query parameters where the {@code Object}
+   * is a {@link java.lang.String} or can be transformed into a {@link java.lang.String} with {@link
+   * String#valueOf(Object)}.
    *
    * @param path the path to make the request to
    * @param parameters the query string parameters

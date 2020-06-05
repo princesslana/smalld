@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
-
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;

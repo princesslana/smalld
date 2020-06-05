@@ -241,8 +241,6 @@ public class SmallD implements AutoCloseable {
    * @throws IllegalArgumentException when the given path is malformed
    */
   public String get(String path) {
-    LOG.debug("HTTP GET {}", path);
-
     return get(path, Collections.emptyMap());
   }
 
@@ -264,7 +262,6 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
-   * @throws IllegalArgumentException when the given path is malformed
    */
   public String get(String path, Map<String, Object> parameters) {
     LOG.debug("HTTP GET {}", path);
@@ -289,16 +286,43 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
-   * @throws IllegalArgumentException when the given path is malformed
    */
   public String post(String path, String payload, Attachment... attachments) {
+    return post(path, payload, Collections.emptyMap(), attachments);
+  }
+
+  /**
+   * Make a HTTP POST request to a Discord REST endpoint. The path provided should start with {@code
+   * /} and will be appended to the base URL that has been configured.
+   *
+   * <p>If no attachments are provided the request will be send with a content type of
+   * application/json. If attachments are present the content type will be multipart/form-data and
+   * the json payload is included in the part named {@code payload_json}.
+   *
+   * <p>This get request provides should provide a set of query parameters where the {@code Object}
+   * is a {@link java.lang.String} or can be transformed into a {@link java.lang.String} with {@link
+   * String#valueOf(Object)}.
+   *
+   * @param path the path to make the request to
+   * @param payload the body to be sent with the request
+   * @param parameters query string parameters
+   * @param attachments attachments for a multipart request
+   * @return the body of the HTTP response
+   * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
+   *     limited
+   * @throws HttpException.ClientException if there was a HTTP 4xx response
+   * @throws HttpException.ServerException is there was a HTTP 5xx response
+   * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   */
+  public String post(
+      String path, String payload, Map<String, Object> parameters, Attachment... attachments) {
     LOG.debug("HTTP POST {}: {}", path, payload);
 
     boolean isMultipart = attachments.length > 0;
 
     return isMultipart
         ? postMultipart(path, payload, attachments)
-        : http.send(path, b -> b.post(jsonBody(payload)), Collections.emptyMap());
+        : http.send(path, b -> b.post(jsonBody(payload)), parameters);
   }
 
   private String postMultipart(String path, String payload, Attachment... attachments) {
@@ -331,12 +355,35 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
-   * @throws IllegalArgumentException when the given path is malformed
    */
   public String put(String path, String payload) {
+    return put(path, payload, Collections.emptyMap());
+  }
+
+  /**
+   * Make a HTTP PUT request to a Discord REST endpoint.
+   *
+   * <p>The request will be send with a content type of application/json. The path provided should
+   * start with {@code /} and will be appended to the base URL that has been configured.
+   *
+   * <p>This get request provides should provide a set of query parameters where the {@code Object}
+   * is a {@link java.lang.String} or can be transformed into a {@link java.lang.String} with {@link
+   * String#valueOf(Object)}.
+   *
+   * @param path the path to make the request to
+   * @param payload the body to be sent with the request
+   * @param parameters query string parameters
+   * @return the body of the HTTP response
+   * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
+   *     limited
+   * @throws HttpException.ClientException if there was a HTTP 4xx response
+   * @throws HttpException.ServerException is there was a HTTP 5xx response
+   * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   */
+  public String put(String path, String payload, Map<String, Object> parameters) {
     LOG.debug("HTTP PUT {}: {}", path, payload);
 
-    return http.send(path, b -> b.put(jsonBody(payload)), Collections.emptyMap());
+    return http.send(path, b -> b.put(jsonBody(payload)), parameters);
   }
 
   /**
@@ -353,7 +400,6 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
-   * @throws IllegalArgumentException when the given path is malformed
    */
   public String patch(String path, String payload) {
     LOG.debug("HTTP PATCH {}: {}", path, payload);
@@ -374,7 +420,6 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
-   * @throws IllegalArgumentException when the given path is malformed
    */
   public String delete(String path) {
     LOG.debug("HTTP DELETE {}", path);

@@ -2,6 +2,7 @@ package com.github.princesslana.smalld;
 
 import com.github.princesslana.smalld.ratelimit.RateLimitInterceptor;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
@@ -99,20 +100,13 @@ public class HttpClient implements AutoCloseable {
    * @throws HttpException.ClientException if there was a HTTP 4xx response
    * @throws HttpException.ServerException is there was a HTTP 5xx response
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
-   * @throws IllegalArgumentException when the given path is malformed
    */
   public String send(
       String path, UnaryOperator<Request.Builder> build, Map<String, Object> parameters) {
-    HttpUrl baseUrl = HttpUrl.parse(config.getBaseUrl() + path);
-    if (baseUrl == null) {
-      throw new IllegalArgumentException("Illegal argument in path: " + path);
-    }
-    HttpUrl.Builder urlBuilder = baseUrl.newBuilder();
+    HttpUrl.Builder urlBuilder = HttpUrl.get(URI.create(config.getBaseUrl() + path)).newBuilder();
 
-    if (!parameters.isEmpty()) {
-      parameters.forEach(
-          (string, object) -> urlBuilder.addQueryParameter(string, String.valueOf(object)));
-    }
+    parameters.forEach(
+        (string, object) -> urlBuilder.addQueryParameter(string, String.valueOf(object)));
 
     Request.Builder builder = new Request.Builder().url(urlBuilder.build());
 

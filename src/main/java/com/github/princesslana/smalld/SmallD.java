@@ -4,6 +4,7 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -241,6 +242,30 @@ public class SmallD implements AutoCloseable {
     LOG.debug("HTTP GET {}", path);
 
     return http.send(path, Request.Builder::get);
+  }
+
+  /**
+   * Make a HTTP GET request to a Discord REST endpoint.
+   *
+   * <p>The path provided should start with {@code /} and will be appended to the base URL that has
+   * been configured.
+   *
+   * <p>This get request provides should provide a set of query parameters where the {@code Object} is a
+   * {@link java.lang.String} or can be transformed into a {@link java.lang.String} with {@link String#valueOf(Object)}.
+   *
+   * @param path the path to make the request to
+   * @return the body of the HTTP response
+   * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
+   *     limited
+   * @throws HttpException.ClientException if there was a HTTP 4xx response
+   * @throws HttpException.ServerException is there was a HTTP 5xx response
+   * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   * @throws IllegalArgumentException when the given path is malformed
+   */
+  public String get(String path, Map<String, Object> parameters) {
+    LOG.debug("HTTP GET {}", path);
+
+    return http.send(path, Request.Builder::get, parameters);
   }
 
   /**

@@ -2,9 +2,12 @@ package com.github.princesslana.smalld;
 
 import com.github.princesslana.smalld.ratelimit.RateLimitInterceptor;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+
+import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -93,6 +96,35 @@ public class HttpClient implements AutoCloseable {
    */
   public String send(String path, UnaryOperator<Request.Builder> build) {
     Request.Builder builder = new Request.Builder().url(config.getBaseUrl() + path);
+
+    return send(build.apply(builder).build());
+  }
+
+  /**
+   * Sends a request build with the builder to the given path. The path is relative to the base url
+   * that is retrieved from the {@link Config} provided when the {@code HttpClient} was initialized.
+   *
+   * <p> This send request is invoked when the request sent contains query parameters.
+   *
+   * @param path path to send the request to
+   * @param build UnaryOperator to allow building of the request
+   * @param parameters Map of query string parameters
+   * @return the body of the HTTP response
+   * @throws com.github.princesslana.smalld.ratelimit.RateLimitException if the request was rate
+   *     limited
+   * @throws HttpException.ClientException if there was a HTTP 4xx response
+   * @throws HttpException.ServerException is there was a HTTP 5xx response
+   * @throws HttpException for any non 2xx/4xx/5xx ressponse
+   * @throws IllegalArgumentException when the given path is malformed
+   */
+  public String send(String path, UnaryOperator<Request.Builder> build, Map<String, Object> parameters) {
+    HttpUrl baseUrl = HttpUrl.parse(config.getBaseUrl() + path);
+    if(baseUrl == null) throw new IllegalArgumentException("Illegal argument in path: " + path);
+    HttpUrl.Builder urlBuilder = baseUrl.newBuilder();
+
+    parameters.forEach((string, object) -> urlBuilder.addQueryParameter(string, String.valueOf(object)));
+
+    Request.Builder builder = new Request.Builder().url(urlBuilder.build());
 
     return send(build.apply(builder).build());
   }

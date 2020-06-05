@@ -2,7 +2,6 @@ package com.github.princesslana.smalld;
 
 import com.github.princesslana.smalld.ratelimit.RateLimitInterceptor;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
@@ -103,7 +102,7 @@ public class HttpClient implements AutoCloseable {
    */
   public String send(
       String path, UnaryOperator<Request.Builder> build, Map<String, Object> parameters) {
-    HttpUrl.Builder urlBuilder = HttpUrl.get(URI.create(config.getBaseUrl() + path)).newBuilder();
+    HttpUrl.Builder urlBuilder = HttpUrl.get(config.getBaseUrl()).newBuilder().addPathSegment(path);
 
     parameters.forEach(
         (string, object) -> urlBuilder.addQueryParameter(string, String.valueOf(object)));

@@ -18,9 +18,9 @@ class TestConfig {
   }
 
   @Test
-  void getIntents_whenDefaults_shouldBeAll() {
+  void getIntents_whenDefaults_shouldBeUnprivileged() {
     Config cfg = Config.builder().build();
-    Assertions.assertThat(cfg.getIntents()).isEqualTo(GatewayIntent.ALL);
+    Assertions.assertThat(cfg.getIntents()).isEqualTo(GatewayIntent.UNPRIVILEGED);
   }
 
   @Test

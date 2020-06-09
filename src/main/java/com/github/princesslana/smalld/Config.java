@@ -94,7 +94,7 @@ public class Config {
     private int currentShard = 0;
     private int numberOfShards = 1;
     private String token;
-    private int intents = GatewayIntent.ALL;
+    private int intents = GatewayIntent.UNPRIVILEGED;
 
     private Builder() {}
 

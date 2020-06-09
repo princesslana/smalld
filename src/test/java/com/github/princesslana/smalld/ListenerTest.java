@@ -35,10 +35,12 @@ public abstract class ListenerTest<T extends Consumer<SmallD>> {
 
     payloadListener = capturePayloadListener(subject);
 
+    Config config = Config.builder().setToken(MOCK_TOKEN).build();
+
     Mockito.lenient().when(smalld.getToken()).thenReturn(MOCK_TOKEN);
-    Mockito.lenient().when(smalld.getCurrentShard()).thenReturn(0);
-    Mockito.lenient().when(smalld.getNumberOfShards()).thenReturn(1);
-    Mockito.lenient().when(smalld.getIntents()).thenReturn(GatewayIntent.ALL);
+    Mockito.lenient().when(smalld.getCurrentShard()).thenReturn(config.getCurrentShard());
+    Mockito.lenient().when(smalld.getNumberOfShards()).thenReturn(config.getNumberOfShards());
+    Mockito.lenient().when(smalld.getIntents()).thenReturn(config.getIntents());
   }
 
   protected abstract T createListener();

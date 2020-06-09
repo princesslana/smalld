@@ -24,6 +24,8 @@ public enum GatewayIntent {
   DIRECT_MESSAGE_TYPING(1 << 14);
 
   public static final int ALL = GatewayIntent.toMask(GatewayIntent.values());
+  public static final int PRIVILEGED = GatewayIntent.toMask(GUILD_PRESENCES, GUILD_MEMEBERS);
+  public static final int UNPRIVILEGED = ALL ^ PRIVILEGED;
 
   private final int mask;
 

@@ -45,7 +45,7 @@
     <lib.awaitility.version>4.0.3</lib.awaitility.version>
     <lib.json-unit-assertj.version>2.1.1</lib.json-unit-assertj.version>
     <lib.jsonorg.version>20180130</lib.jsonorg.version>
-    <lib.junit.version>5.4.0</lib.junit.version>
+    <lib.junit.version>5.6.2</lib.junit.version>
     <lib.minimal-json.version>0.9.5</lib.minimal-json.version>
     <lib.mockito.version>3.3.3</lib.mockito.version>
     <lib.okhttp.version>3.12.10</lib.okhttp.version>
@@ -389,6 +389,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${plugin.surefire.version}</version>
         <configuration>
+          <rerunFailingTestsCount>3</rerunFailingTestsCount>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <trimStackTrace>false</trimStackTrace>
           <systemPropertyVariables>

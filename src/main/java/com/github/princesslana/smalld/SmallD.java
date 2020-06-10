@@ -73,8 +73,12 @@ public class SmallD implements AutoCloseable {
    * @param config the config to use with this instance
    */
   public SmallD(Config config) {
+    this(config, new HttpClient(config));
+  }
+
+  public SmallD(Config config, HttpClient http) {
     this.config = config;
-    this.http = new HttpClient(config);
+    this.http = http;
   }
 
   /**
@@ -114,8 +118,10 @@ public class SmallD implements AutoCloseable {
   }
 
   private void connect() {
+    LOG.debug("connecting...");
     String gatewayUrl = getGatewayUrl();
 
+    LOG.debug("Setting up for websocket...");
     Request request = new Request.Builder().url(gatewayUrl).build();
 
     WebSocketListener onMessageListener =
@@ -136,6 +142,7 @@ public class SmallD implements AutoCloseable {
           }
         };
 
+    LOG.debug("calling http.newWebSocket...");
     gatewayWebSocket =
         http.newWebSocket(request, new LoggingWebSocketListener(LOG, onMessageListener));
   }
@@ -175,6 +182,7 @@ public class SmallD implements AutoCloseable {
 
   /** Run until closed. */
   public void run() {
+    LOG.debug("Running...");
     running = true;
     while (running) {
       try {

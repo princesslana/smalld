@@ -68,13 +68,28 @@ public class SmallD implements AutoCloseable {
    * Construct a {@code SmallD} instance with the provided config.
    *
    * <p>Note that this does not setup any of the default functionality such as identifying,
-   * resuming, etc.
+   * resuming, etc. In the common case you will want one of the static {@code create} or {@code run}
+   * methods.
    *
    * @param config the config to use with this instance
    */
   public SmallD(Config config) {
+    this(config, new HttpClient(config));
+  }
+
+  /**
+   * Construct a {@code SmallD} instance with the provided config and HTTP client.
+   *
+   * <p>Note that this does not setup any of the default functionality such as identifying,
+   * resuming, etc. In the common case you will want one of the static {@code create} or {@code run}
+   * methods.
+   *
+   * @param config the config to use with this instance
+   * @param http the HTTP client to use with this instance
+   */
+  public SmallD(Config config, HttpClient http) {
     this.config = config;
-    this.http = new HttpClient(config);
+    this.http = http;
   }
 
   /**

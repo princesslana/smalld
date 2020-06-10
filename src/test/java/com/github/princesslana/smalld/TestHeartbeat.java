@@ -32,8 +32,8 @@ class TestHeartbeat extends ListenerTest<Heartbeat> {
     sendToListener(ready(500));
     assertHeartbeat(0, 1);
 
-    sendToListener(ready(2500));
-    assertHeartbeat(2, 3);
+    sendToListener(ready(1500));
+    assertHeartbeat(1, 2);
   }
 
   @Test
@@ -52,7 +52,7 @@ class TestHeartbeat extends ListenerTest<Heartbeat> {
 
   private void assertHeartbeat(int minSeconds, int maxSeconds) {
     try {
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 2; i++) {
         CompletableFuture<String> sent = awaitSentPayload();
         Awaitility.await()
             .atLeast(minSeconds, TimeUnit.SECONDS)

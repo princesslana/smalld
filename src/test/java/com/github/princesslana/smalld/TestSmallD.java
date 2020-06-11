@@ -3,6 +3,7 @@ package com.github.princesslana.smalld;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import org.assertj.core.api.Assertions;
@@ -97,18 +98,28 @@ class TestSmallD {
   }
 
   @Test
-  void run_whenListenerException_shouldContinue() {
+  void run_whenListenerException_shouldContinue() throws Exception {
+    AtomicBoolean throwException = new AtomicBoolean(true);
+    CompletableFuture<String> msg = new CompletableFuture<>();
+
     subject.onGatewayPayload(
         p -> {
-          throw new RuntimeException();
+          if (throwException.get()) {
+            throw new RuntimeException();
+          }
         });
+    subject.onGatewayPayload(msg::complete);
 
     wsListener.onMessage(webSocket, "");
 
-    Awaitility.await()
-        .during(1, TimeUnit.SECONDS)
-        .atMost(2, TimeUnit.SECONDS)
-        .untilAsserted(() -> Assertions.assertThat(run.isDone()).isFalse());
+    Assertions.assertThat(msg.isDone()).isFalse();
+
+    throwException.set(false);
+
+    wsListener.onMessage(webSocket, "TEST_MESSAGE");
+
+    Awaitility.await().atMost(1, TimeUnit.SECONDS).until(msg::isDone);
+    Assertions.assertThat(msg.get()).isEqualTo("TEST_MESSAGE");
   }
 
   private CompletableFuture<WebSocketListener> awaitConnection() {

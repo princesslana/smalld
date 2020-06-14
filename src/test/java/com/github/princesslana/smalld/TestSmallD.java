@@ -105,6 +105,7 @@ class TestSmallD {
     subject.onGatewayPayload(
         p -> {
           if (throwException.get()) {
+            throwException.set(false);
             throw new RuntimeException();
           }
         });
@@ -113,8 +114,6 @@ class TestSmallD {
     wsListener.onMessage(webSocket, "");
 
     Assertions.assertThat(msg.isDone()).isFalse();
-
-    throwException.set(false);
 
     wsListener.onMessage(webSocket, "TEST_MESSAGE");
 

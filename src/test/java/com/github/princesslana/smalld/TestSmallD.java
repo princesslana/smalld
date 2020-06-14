@@ -92,6 +92,12 @@ class TestSmallD {
   }
 
   @Test
+  void run_whenClosingWithFatalError_shouldClose() {
+    wsListener.onClosing(webSocket, 4014, "");
+    Awaitility.await().atMost(1, TimeUnit.SECONDS).until(run::isDone);
+  }
+
+  @Test
   void run_whenFailure_shouldReconnect() {
     wsListener.onFailure(webSocket, new Exception(), null);
     assertReconnect();

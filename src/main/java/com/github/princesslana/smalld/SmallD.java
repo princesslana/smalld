@@ -3,9 +3,12 @@ package com.github.princesslana.smalld;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,6 +51,9 @@ public class SmallD implements AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(SmallD.class);
 
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+
+  private static final Set<Integer> FATAL_WEBSOCKET_CLOSE_CODES =
+      new HashSet<>(Arrays.asList(4004, 4010, 4011, 4012, 4013, 4014));
 
   private final Config config;
 
@@ -147,7 +153,13 @@ public class SmallD implements AutoCloseable {
 
           @Override
           public void onClosing(WebSocket ws, int code, String reason) {
-            reconnect();
+            if (FATAL_WEBSOCKET_CLOSE_CODES.contains(code)) {
+              LOG.error("Unrecoverable gateway closure: ({}) {}", code, reason);
+              close();
+            } else {
+              LOG.info("Gateway closed: ({}) {}", code, reason);
+              reconnect();
+            }
           }
         };
 

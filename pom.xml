@@ -190,21 +190,21 @@
           <failsOnError>true</failsOnError>
           <checkstyleRules>
             <module name="Checker">
-              <module name="JavadocPackage"/>
+              <module name="JavadocPackage"></module>
               <module name="TreeWalker">
                 <module name="AvoidStarImport"></module>
                 <module name="NeedBraces"></module>
-                <module name="AtclauseOrder"/>
-                <module name="JavadocType"/>
+                <module name="AtclauseOrder"></module>
+                <module name="JavadocType"></module>
                 <module name="JavadocMethod">
-                  <property name="scope" value="public"/>
-                  <property name="allowUndeclaredRTE" value="true"/>
+                  <property name="scope" value="public"></property>
+                  <property name="allowUndeclaredRTE" value="true"></property>
                 </module>
-                <module name="JavadocParagraph"/>
-                <module name="JavadocStyle"/>
-                <module name="NonEmptyAtclauseDescription"/>
-                <module name="SingleLineJavadoc"/>
-                <module name="SummaryJavadocCheck"/>
+                <module name="JavadocParagraph"></module>
+                <module name="JavadocStyle"></module>
+                <module name="NonEmptyAtclauseDescription"></module>
+                <module name="SingleLineJavadoc"></module>
+                <module name="SummaryJavadocCheck"></module>
               </module>
             </module>
           </checkstyleRules>
@@ -338,6 +338,13 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>${plugin.jar.version}</version>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Automatic-Module-Name>com.github.princesslana.smalld</Automatic-Module-Name>
+            </manifestEntries>
+          </archive>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

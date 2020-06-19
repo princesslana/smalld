@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 
 /**
  * Identifies with the Discord Gateway. When a HELLO event is received it will send an IDENTIFY or
- * RESUME payload as necessary.
+ * RESUME payload as necessary. When a RECONNECT event is received it will reconnect.
  */
 public class Identify implements Consumer<SmallD> {
 
@@ -43,6 +43,10 @@ public class Identify implements Consumer<SmallD> {
 
             case GatewayPayload.OP_HELLO:
               onHello(smalld);
+              break;
+
+            case GatewayPayload.OP_RECONNECT:
+              onReconnect(smalld);
               break;
 
             default:
@@ -101,5 +105,9 @@ public class Identify implements Consumer<SmallD> {
     }
 
     smalld.sendGatewayPayload(identify(smalld).toString());
+  }
+
+  private void onReconnect(SmallD smalld) {
+    smalld.reconnect();
   }
 }

@@ -238,7 +238,6 @@ public class SmallD implements AutoCloseable {
       gatewayPayloadListeners.forEach(l -> l.accept(text));
     } catch (Exception e) {
       LOG.warn("Exception thrown when notifying listeners of gateway payload", e);
-      throw e;
     }
   }
 

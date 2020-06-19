@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 /**
  * Sends heartbeat payloads to the Discord Gateway. It will begin sending heartbeats after the HELLO
- * payload is received.
+ * payload is received. Sends a HEARTBEAT when a HEARTBEAT event is received.
  */
 public class Heartbeat implements Consumer<SmallD> {
 

@@ -9,7 +9,8 @@ import java.util.function.Consumer;
 
 /**
  * Sends heartbeat payloads to the Discord Gateway. It will begin sending heartbeats after the HELLO
- * payload is received. Sends a HEARTBEAT when a HEARTBEAT event is received.
+ * payload is received and reconnects if a heartbeat ack is not received. Sends a HEARTBEAT when a
+ * HEARTBEAT event is received.
  */
 public class Heartbeat implements Consumer<SmallD> {
 
@@ -18,6 +19,8 @@ public class Heartbeat implements Consumer<SmallD> {
   private final SequenceNumber sequenceNumber;
 
   private ScheduledFuture<?> heartbeat;
+
+  private volatile boolean ackReceived = false;
 
   /**
    * Constructs an instance that will send heartbeats.
@@ -45,6 +48,10 @@ public class Heartbeat implements Consumer<SmallD> {
             case GatewayPayload.OP_HEARTBEAT:
               onHeartbeat(smalld);
               break;
+
+            case GatewayPayload.OP_HEARTBEAT_ACK:
+              onHeartbeatAck();
+              break;
           }
         });
   }
@@ -57,12 +64,36 @@ public class Heartbeat implements Consumer<SmallD> {
     long interval = d.getInt("heartbeat_interval", -1);
 
     heartbeat =
-        heartbeatExecutor.scheduleAtFixedRate(
-            () -> sendHeartbeat(smalld), interval, interval, TimeUnit.MILLISECONDS);
+        heartbeatExecutor.schedule(
+            () -> runHeartbeatLoop(smalld, interval), interval, TimeUnit.MILLISECONDS);
+  }
+
+  private void runHeartbeatLoop(SmallD smalld, long interval) {
+    while (true) {
+      sendHeartbeat(smalld);
+
+      try {
+        Thread.sleep(interval);
+      } catch (InterruptedException ignored) {
+        Thread.currentThread().interrupt();
+        break;
+      }
+
+      if (ackReceived) {
+        ackReceived = false;
+      } else {
+        smalld.reconnect();
+        break;
+      }
+    }
   }
 
   private void onHeartbeat(SmallD smalld) {
     sendHeartbeat(smalld);
+  }
+
+  private void onHeartbeatAck() {
+    ackReceived = true;
   }
 
   private void sendHeartbeat(SmallD smalld) {

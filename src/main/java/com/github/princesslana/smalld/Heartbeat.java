@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 /**
  * Sends heartbeat payloads to the Discord Gateway. It will begin sending heartbeats after the HELLO
- * payload is received.
+ * payload is received. Sends a HEARTBEAT when a HEARTBEAT event is received.
  */
 public class Heartbeat implements Consumer<SmallD> {
 
@@ -37,8 +37,14 @@ public class Heartbeat implements Consumer<SmallD> {
         s -> {
           GatewayPayload p = GatewayPayload.parse(s);
 
-          if (p.getOp() == GatewayPayload.OP_HELLO) {
-            onHello(smalld, p.getD());
+          switch (p.getOp()) {
+            case GatewayPayload.OP_HELLO:
+              onHello(smalld, p.getD());
+              break;
+
+            case GatewayPayload.OP_HEARTBEAT:
+              onHeartbeat(smalld);
+              break;
           }
         });
   }
@@ -53,6 +59,10 @@ public class Heartbeat implements Consumer<SmallD> {
     heartbeat =
         heartbeatExecutor.scheduleAtFixedRate(
             () -> sendHeartbeat(smalld), interval, interval, TimeUnit.MILLISECONDS);
+  }
+
+  private void onHeartbeat(SmallD smalld) {
+    sendHeartbeat(smalld);
   }
 
   private void sendHeartbeat(SmallD smalld) {

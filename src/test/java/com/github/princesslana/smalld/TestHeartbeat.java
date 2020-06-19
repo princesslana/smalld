@@ -46,6 +46,15 @@ class TestHeartbeat extends ListenerTest<Heartbeat> {
     JsonAssertions.assertThatJson(heartbeat).node("d").isEqualTo(42);
   }
 
+  @Test
+  void whenHeartbeatReceived_shouldSendHeartbeat() {
+    sendToListener(Json.object().add("op", GatewayPayload.OP_HEARTBEAT));
+
+    String sent = captureSentPayload();
+
+    JsonAssertions.assertThatJson(sent).node("op").isEqualTo(GatewayPayload.OP_HEARTBEAT);
+  }
+
   private JsonObject ready(int interval) {
     return Json.object().add("op", 10).add("d", Json.object().add("heartbeat_interval", interval));
   }

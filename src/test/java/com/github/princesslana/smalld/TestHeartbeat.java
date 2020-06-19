@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -20,13 +21,12 @@ class TestHeartbeat {
 
   private Heartbeat subject;
 
-  private MockSmallD smalld;
+  @Spy private MockSmallD smalld;
 
   @Mock private SequenceNumber sequenceNumber;
 
   @BeforeEach
   void subject() {
-    smalld = new MockSmallD();
     subject = new Heartbeat(sequenceNumber);
     subject.accept(smalld);
   }
@@ -34,16 +34,19 @@ class TestHeartbeat {
   @Test
   void whenHelloReceived_shouldSendHeartbeat() {
     smalld.receivePayload(ready(500));
-    assertHeartbeat(0, 1);
+    smalld.receivePayload(heartbeatAck());
+    assertTwoHeartbeats(0, 1);
   }
 
   @Test
   void whenSecondHelloReceived_shouldCancelFirstHeartbeat() {
     smalld.receivePayload(ready(500));
-    assertHeartbeat(0, 1);
+    smalld.receivePayload(heartbeatAck());
+    assertTwoHeartbeats(0, 1);
 
     smalld.receivePayload(ready(1500));
-    assertHeartbeat(1, 2);
+    smalld.receivePayload(heartbeatAck());
+    assertTwoHeartbeats(1, 2);
   }
 
   @Test
@@ -56,6 +59,14 @@ class TestHeartbeat {
     JsonAssertions.assertThatJson(heartbeat).node("d").isEqualTo(42);
   }
 
+  @Test
+  void whenNoHeartbeatAck_shouldReconnect() {
+    smalld.receivePayload(ready(500));
+    assertHeartbeat(0, 500);
+    Mockito.verify(smalld, Mockito.after(500).times(1)).reconnect();
+  }
+
+  @Test
   void whenHeartbeatReceived_shouldSendHeartbeat() throws Exception {
     smalld.receivePayload(Json.object().add("op", GatewayPayload.OP_HEARTBEAT).toString());
 
@@ -70,18 +81,26 @@ class TestHeartbeat {
         .toString();
   }
 
+  private String heartbeatAck() {
+    return Json.object().add("op", GatewayPayload.OP_HEARTBEAT_ACK).toString();
+  }
+
   private void assertHeartbeat(int minSeconds, int maxSeconds) {
     try {
-      for (int i = 0; i < 2; i++) {
-        CompletableFuture<String> sent = smalld.awaitSentPayload();
-        Awaitility.await()
-            .atLeast(minSeconds, TimeUnit.SECONDS)
-            .atMost(maxSeconds, TimeUnit.SECONDS)
-            .until(sent::isDone);
-        JsonAssertions.assertThatJson(sent.get()).node("op").isEqualTo(GatewayPayload.OP_HEARTBEAT);
-      }
+      CompletableFuture<String> sent = smalld.awaitSentPayload();
+      Awaitility.await()
+          .atLeast(minSeconds, TimeUnit.SECONDS)
+          .atMost(maxSeconds, TimeUnit.SECONDS)
+          .until(sent::isDone);
+      JsonAssertions.assertThatJson(sent.get()).node("op").isEqualTo(GatewayPayload.OP_HEARTBEAT);
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private void assertTwoHeartbeats(int minSeconds, int maxSeconds) {
+    for (int i = 0; i < 2; i++) {
+      assertHeartbeat(minSeconds, maxSeconds);
     }
   }
 }

@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 /** A bot that will response to a ping message. */
 public class PingBot implements Consumer<SmallD> {
 
+  @Override
   public void accept(SmallD smalld) {
     smalld.onGatewayPayload(
         p -> {

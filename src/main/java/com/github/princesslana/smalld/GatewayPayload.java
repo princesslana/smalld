@@ -12,6 +12,7 @@ public class GatewayPayload {
   public static final int OP_HEARTBEAT = 1;
   public static final int OP_IDENTIFY = 2;
   public static final int OP_RESUME = 6;
+  public static final int OP_RECONNECT = 7;
   public static final int OP_INVALID_SESSION = 9;
   public static final int OP_HELLO = 10;
 

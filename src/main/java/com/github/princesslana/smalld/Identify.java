@@ -45,6 +45,10 @@ public class Identify implements Consumer<SmallD> {
               onHello(smalld);
               break;
 
+            case GatewayPayload.OP_RECONNECT:
+              onReconnect(smalld);
+              break;
+
             default:
               // do nothing
           }
@@ -101,5 +105,9 @@ public class Identify implements Consumer<SmallD> {
     }
 
     smalld.sendGatewayPayload(identify(smalld).toString());
+  }
+
+  private void onReconnect(SmallD smalld) {
+    smalld.reconnect();
   }
 }

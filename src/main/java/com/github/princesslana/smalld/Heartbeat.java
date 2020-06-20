@@ -2,6 +2,7 @@ package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -17,7 +18,7 @@ public class Heartbeat implements Consumer<SmallD> {
 
   private final SequenceNumber sequenceNumber;
 
-  private volatile boolean running = false;
+  private volatile ScheduledFuture<?> heartbeat;
 
   private volatile boolean ackReceived = true;
 
@@ -56,26 +57,18 @@ public class Heartbeat implements Consumer<SmallD> {
   }
 
   private void onHello(SmallD smalld, JsonObject d) {
-    if (running) {
-      running = false;
+    if (heartbeat != null) {
+      heartbeat.cancel(true);
     }
 
     long interval = d.getInt("heartbeat_interval", -1);
 
-    heartbeatExecutor.schedule(
-        () -> {
-          running = true;
-          startScheduledHeartbeats(smalld, interval);
-        },
-        interval,
-        TimeUnit.MILLISECONDS);
+    heartbeat =
+        heartbeatExecutor.schedule(
+            () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
   }
 
   private void startScheduledHeartbeats(SmallD smalld, long interval) {
-    if (!running) {
-      return;
-    }
-
     if (ackReceived) {
       ackReceived = false;
     } else {
@@ -85,8 +78,9 @@ public class Heartbeat implements Consumer<SmallD> {
 
     sendHeartbeat(smalld);
 
-    heartbeatExecutor.schedule(
-        () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
+    heartbeat =
+        heartbeatExecutor.schedule(
+            () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
   }
 
   private void onHeartbeat(SmallD smalld) {

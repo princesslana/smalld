@@ -2,7 +2,6 @@ package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -17,8 +16,6 @@ public class Heartbeat implements Consumer<SmallD> {
   private final ScheduledThreadPoolExecutor heartbeatExecutor;
 
   private final SequenceNumber sequenceNumber;
-
-  private ScheduledFuture<?> heartbeat;
 
   private volatile boolean running = false;
 
@@ -86,10 +83,7 @@ public class Heartbeat implements Consumer<SmallD> {
       return;
     }
 
-    try {
-      sendHeartbeat(smalld);
-    } catch (Exception ignored) {
-    }
+    sendHeartbeat(smalld);
 
     heartbeatExecutor.schedule(
         () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);

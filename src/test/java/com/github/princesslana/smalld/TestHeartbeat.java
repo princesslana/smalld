@@ -34,18 +34,15 @@ class TestHeartbeat {
   @Test
   void whenHelloReceived_shouldSendHeartbeat() {
     smalld.receivePayload(ready(500));
-    smalld.receivePayload(heartbeatAck());
     assertTwoHeartbeats(0, 1);
   }
 
   @Test
   void whenSecondHelloReceived_shouldCancelFirstHeartbeat() {
     smalld.receivePayload(ready(500));
-    smalld.receivePayload(heartbeatAck());
     assertTwoHeartbeats(0, 1);
 
     smalld.receivePayload(ready(1500));
-    smalld.receivePayload(heartbeatAck());
     assertTwoHeartbeats(1, 2);
   }
 
@@ -101,6 +98,7 @@ class TestHeartbeat {
   private void assertTwoHeartbeats(int minSeconds, int maxSeconds) {
     for (int i = 0; i < 2; i++) {
       assertHeartbeat(minSeconds, maxSeconds);
+      smalld.receivePayload(heartbeatAck());
     }
   }
 }

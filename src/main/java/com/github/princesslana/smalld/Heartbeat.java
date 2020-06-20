@@ -18,9 +18,9 @@ public class Heartbeat implements Consumer<SmallD> {
 
   private final SequenceNumber sequenceNumber;
 
-  private ScheduledFuture<?> heartbeat;
+  private volatile ScheduledFuture<?> heartbeat;
 
-  private volatile boolean ackReceived = false;
+  private volatile boolean ackReceived = true;
 
   /**
    * Constructs an instance that will send heartbeats.
@@ -65,27 +65,25 @@ public class Heartbeat implements Consumer<SmallD> {
 
     heartbeat =
         heartbeatExecutor.schedule(
-            () -> runHeartbeatLoop(smalld, interval), interval, TimeUnit.MILLISECONDS);
+            () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
   }
 
-  private void runHeartbeatLoop(SmallD smalld, long interval) {
-    while (true) {
-      sendHeartbeat(smalld);
-
-      try {
-        Thread.sleep(interval);
-      } catch (InterruptedException ignored) {
-        Thread.currentThread().interrupt();
-        break;
-      }
-
-      if (ackReceived) {
-        ackReceived = false;
-      } else {
-        smalld.reconnect();
-        break;
-      }
+  private void startScheduledHeartbeats(SmallD smalld, long interval) {
+    if (ackReceived) {
+      ackReceived = false;
+    } else {
+      smalld.reconnect();
+      return;
     }
+
+    try {
+      sendHeartbeat(smalld);
+    } catch (Exception ignored) {
+    }
+
+    heartbeat =
+        heartbeatExecutor.schedule(
+            () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
   }
 
   private void onHeartbeat(SmallD smalld) {

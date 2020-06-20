@@ -64,19 +64,16 @@ public class MockSmallD extends SmallD {
   @Override
   public void run() {
     lifecycleEvents.add(LifecycleEvent.RUN);
-    super.run();
   }
 
   @Override
   public void reconnect() {
     lifecycleEvents.add(LifecycleEvent.RECONNECT);
-    super.reconnect();
   }
 
   @Override
   public void close() {
     lifecycleEvents.add(LifecycleEvent.CLOSE);
-    super.close();
   }
 
   /**

@@ -18,7 +18,9 @@ public class Heartbeat implements Consumer<SmallD> {
 
   private final SequenceNumber sequenceNumber;
 
-  private volatile ScheduledFuture<?> heartbeat;
+  private ScheduledFuture<?> heartbeat;
+
+  private volatile boolean running = false;
 
   private volatile boolean ackReceived = true;
 
@@ -57,18 +59,26 @@ public class Heartbeat implements Consumer<SmallD> {
   }
 
   private void onHello(SmallD smalld, JsonObject d) {
-    if (heartbeat != null) {
-      heartbeat.cancel(true);
+    if (running) {
+      running = false;
     }
 
     long interval = d.getInt("heartbeat_interval", -1);
 
-    heartbeat =
-        heartbeatExecutor.schedule(
-            () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
+    heartbeatExecutor.schedule(
+        () -> {
+          running = true;
+          startScheduledHeartbeats(smalld, interval);
+        },
+        interval,
+        TimeUnit.MILLISECONDS);
   }
 
   private void startScheduledHeartbeats(SmallD smalld, long interval) {
+    if (!running) {
+      return;
+    }
+
     if (ackReceived) {
       ackReceived = false;
     } else {
@@ -81,9 +91,8 @@ public class Heartbeat implements Consumer<SmallD> {
     } catch (Exception ignored) {
     }
 
-    heartbeat =
-        heartbeatExecutor.schedule(
-            () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
+    heartbeatExecutor.schedule(
+        () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
   }
 
   private void onHeartbeat(SmallD smalld) {

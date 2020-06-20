@@ -28,13 +28,14 @@ There are getting started guides for:
 * [Java](getting_started/java.md)
 * [Ruby](getting_started/ruby.md)
 
-## Usage
+The SmallD concept has also been ported to:
 
-For reference there's the [Javadocs](https://www.javadoc.io/doc/com.github.princesslana/smalld) and
-always keep the [Discord Developer Documentation](https://discord.com/developers/docs/intro) handy.
+* [Python](https://github.com/princesslana/smalld.py)
 
-If you just want to add it to your project right now SmallD is published to maven central.
-So, it can be added with Maven or Gradle as below.
+## Installing
+
+SmallD is published to maven central.
+It can be added with Maven or Gradle as below.
 Replace `VERSION` with the version you wish to use.
 The latest version is: ![Maven Central](https://img.shields.io/maven-central/v/com.github.princesslana/smalld.svg)
 
@@ -53,28 +54,6 @@ The latest version is: ![Maven Central](https://img.shields.io/maven-central/v/c
 ```groovy
 compile 'com.github.princesslana:smalld:VERSION'
 ```
-
-## Examples
-
-There are example bots included in the github repository
-[here.](https://github.com/princesslana/smalld/tree/master/src/main/java/com/github/princesslana/smalld/examples)
-To run these you will need to setup your bot token in the `SMALLD_TOKEN` environment variable.
-Then:
-
-```bash
-$ mvn compile exec:java \
-    -Dexec.mainClass=com.github.princesslana.smalld.examples.<classname>
-```
-
-For example, to run PingBot:
-
-```bash
-$ mvn compile exec:java \
-    -Dexec.mainClass=com.github.princesslana.smalld.examples.PingBot
-```
-
-There is also the [SmallD Examples](https://github.com/princesslana/smalld-examples) repository
-that contains additional examples of using SmallD.
 
 ## Contributing
 

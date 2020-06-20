@@ -7,13 +7,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import net.javacrumbs.jsonunit.assertj.JsonAssertions;
+import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -21,12 +21,13 @@ class TestHeartbeat {
 
   private Heartbeat subject;
 
-  @Spy private MockSmallD smalld;
+  private MockSmallD smalld;
 
   @Mock private SequenceNumber sequenceNumber;
 
   @BeforeEach
   void subject() {
+    smalld = new MockSmallD();
     subject = new Heartbeat(sequenceNumber);
     subject.accept(smalld);
   }
@@ -57,10 +58,12 @@ class TestHeartbeat {
   }
 
   @Test
-  void whenNoHeartbeatAck_shouldReconnect() {
+  void whenNoHeartbeatAck_shouldReconnect() throws Exception {
     smalld.receivePayload(ready(500));
     assertHeartbeat(0, 500);
-    Mockito.verify(smalld, Mockito.after(500).times(1)).reconnect();
+    final MockSmallD.LifecycleEvent event =
+        smalld.awaitLifecycleEvent().get(500, TimeUnit.MILLISECONDS);
+    Assertions.assertThat(event).isEqualTo(MockSmallD.LifecycleEvent.RECONNECT);
   }
 
   @Test

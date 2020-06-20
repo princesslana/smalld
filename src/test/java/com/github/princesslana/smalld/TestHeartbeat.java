@@ -61,9 +61,9 @@ class TestHeartbeat {
   void whenNoHeartbeatAck_shouldReconnect() throws Exception {
     smalld.receivePayload(ready(500));
     assertHeartbeat(0, 500);
-    final MockSmallD.LifecycleEvent event =
-        smalld.awaitLifecycleEvent().get(500, TimeUnit.MILLISECONDS);
-    Assertions.assertThat(event).isEqualTo(MockSmallD.LifecycleEvent.RECONNECT);
+    final CompletableFuture<MockSmallD.LifecycleEvent> event = smalld.awaitLifecycleEvent();
+    Awaitility.await().atMost(500, TimeUnit.MILLISECONDS).until(event::isDone);
+    Assertions.assertThat(event.get()).isEqualTo(MockSmallD.LifecycleEvent.RECONNECT);
   }
 
   @Test

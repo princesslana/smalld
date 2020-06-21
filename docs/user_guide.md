@@ -51,7 +51,7 @@ SmallD.run(config, myBot);
 
 ## Gateway Events
 
-To listen to events from the Discord gateway use `Smalld.onGatewayPayload`.
+To listen to events from the Discord gateway use `Smalld#onGatewayPayload`.
 This will pass the String that was sent from Discord to the listener you provide.
 
 ```java
@@ -60,7 +60,7 @@ smalld.onGatewayPayload((payload) -> {
 });
 ```
 
-To send a payload to the Discord gateway you can use `SmallD.sendGatewayPayload`.
+To send a payload to the Discord gateway you can use `SmallD#sendGatewayPayload`.
 
 ## Resources
 

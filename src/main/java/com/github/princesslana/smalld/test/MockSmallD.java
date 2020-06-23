@@ -17,7 +17,7 @@ import java.util.function.Consumer;
  */
 public class MockSmallD extends SmallD {
 
-  /** The token that the instance is conifgured with. */
+  /** The token that the instance is configured with. */
   public static final String MOCK_TOKEN = "Mock.Token";
 
   private final List<Consumer<String>> listeners = new ArrayList<>();
@@ -25,6 +25,8 @@ public class MockSmallD extends SmallD {
   private final BlockingQueue<String> sentPayloads = new ArrayBlockingQueue<>(100, true);
 
   private final BlockingQueue<SentRequest> sentRequests = new ArrayBlockingQueue<>(100, true);
+
+  private final BlockingQueue<LifecycleEvent> lifecycleEvents = new ArrayBlockingQueue<>(100, true);
 
   /** Construct a {@code MockSmallD} instance. */
   public MockSmallD() {
@@ -57,6 +59,30 @@ public class MockSmallD extends SmallD {
    */
   public CompletableFuture<String> awaitSentPayload() {
     return take(sentPayloads);
+  }
+
+  @Override
+  public void run() {
+    lifecycleEvents.add(LifecycleEvent.RUN);
+  }
+
+  @Override
+  public void reconnect() {
+    lifecycleEvents.add(LifecycleEvent.RECONNECT);
+  }
+
+  @Override
+  public void close() {
+    lifecycleEvents.add(LifecycleEvent.CLOSE);
+  }
+
+  /**
+   * Get the next lifecycle event that occurred.
+   *
+   * @return a {@code CompletableFuture} that will complete with the lifecycle event
+   */
+  public CompletableFuture<LifecycleEvent> awaitLifecycleEvent() {
+    return take(lifecycleEvents);
   }
 
   @Override
@@ -107,5 +133,12 @@ public class MockSmallD extends SmallD {
             throw new RuntimeException(e);
           }
         });
+  }
+
+  /** SmallD lifecycle events. */
+  public enum LifecycleEvent {
+    RUN,
+    RECONNECT,
+    CLOSE,
   }
 }

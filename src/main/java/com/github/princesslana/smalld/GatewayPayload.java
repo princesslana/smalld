@@ -15,6 +15,7 @@ public class GatewayPayload {
   public static final int OP_RECONNECT = 7;
   public static final int OP_INVALID_SESSION = 9;
   public static final int OP_HELLO = 10;
+  public static final int OP_HEARTBEAT_ACK = 11;
 
   private final JsonObject json;
 

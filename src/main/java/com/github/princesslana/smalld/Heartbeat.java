@@ -2,10 +2,6 @@ package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -15,14 +11,13 @@ import java.util.function.Consumer;
  */
 public class Heartbeat implements Consumer<SmallD> {
 
-  private final ScheduledThreadPoolExecutor heartbeatExecutor;
-
   private final SequenceNumber sequenceNumber;
 
-  private volatile boolean running = false;
-  private CyclicBarrier runningBarrier = new CyclicBarrier(2);
+  private Thread heartbeatThread = null;
 
-  private volatile boolean ackReceived = true;
+  private volatile long heartbeatInterval;
+
+  private volatile boolean ackReceived = false;
 
   /**
    * Constructs an instance that will send heartbeats.
@@ -31,9 +26,6 @@ public class Heartbeat implements Consumer<SmallD> {
    */
   public Heartbeat(SequenceNumber sequenceNumber) {
     this.sequenceNumber = sequenceNumber;
-
-    heartbeatExecutor = new ScheduledThreadPoolExecutor(0, SmallD.DAEMON_THREAD_FACTORY);
-    heartbeatExecutor.setRemoveOnCancelPolicy(true);
   }
 
   @Override
@@ -59,43 +51,38 @@ public class Heartbeat implements Consumer<SmallD> {
   }
 
   private void onHello(SmallD smalld, JsonObject d) {
-    if (running) {
-      running = false;
-      awaitBarrier();
+    heartbeatInterval = d.getInt("heartbeat_interval", -1);
+
+    if (heartbeatThread == null || !heartbeatThread.isAlive()) {
+      heartbeatThread = SmallD.DAEMON_THREAD_FACTORY.newThread(() -> runHeartbeatLoop(smalld));
+      heartbeatThread.start();
     }
-
-    long interval = d.getInt("heartbeat_interval", -1);
-
-    running = true;
-    heartbeatExecutor.schedule(
-        () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
   }
 
-  private void startScheduledHeartbeats(SmallD smalld, long interval) {
-    if (!running) {
-      awaitBarrier();
-      return;
-    }
-
-    if (ackReceived) {
-      ackReceived = false;
-    } else {
-      smalld.reconnect();
-      return;
-    }
-
-    sendHeartbeat(smalld);
-
-    heartbeatExecutor.schedule(
-        () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
-  }
-
-  private void awaitBarrier() {
+  private void runHeartbeatLoop(SmallD smalld) {
     try {
-      runningBarrier.await();
+      Thread.sleep(heartbeatInterval);
     } catch (InterruptedException ignored) {
       Thread.currentThread().interrupt();
-    } catch (BrokenBarrierException ignored) {
+      return;
+    }
+
+    while (true) {
+      sendHeartbeat(smalld);
+
+      try {
+        Thread.sleep(heartbeatInterval);
+      } catch (InterruptedException ignored) {
+        Thread.currentThread().interrupt();
+        return;
+      }
+
+      if (ackReceived) {
+        ackReceived = false;
+      } else {
+        smalld.reconnect();
+        break;
+      }
     }
   }
 

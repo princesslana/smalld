@@ -2,7 +2,8 @@ package com.github.princesslana.smalld;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -18,7 +19,8 @@ public class Heartbeat implements Consumer<SmallD> {
 
   private final SequenceNumber sequenceNumber;
 
-  private volatile ScheduledFuture<?> heartbeat;
+  private volatile boolean running = false;
+  private CyclicBarrier runningBarrier = new CyclicBarrier(2);
 
   private volatile boolean ackReceived = true;
 
@@ -57,18 +59,24 @@ public class Heartbeat implements Consumer<SmallD> {
   }
 
   private void onHello(SmallD smalld, JsonObject d) {
-    if (heartbeat != null) {
-      heartbeat.cancel(true);
+    if (running) {
+      running = false;
+      awaitBarrier();
     }
 
     long interval = d.getInt("heartbeat_interval", -1);
 
-    heartbeat =
-        heartbeatExecutor.schedule(
-            () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
+    running = true;
+    heartbeatExecutor.schedule(
+        () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
   }
 
   private void startScheduledHeartbeats(SmallD smalld, long interval) {
+    if (!running) {
+      awaitBarrier();
+      return;
+    }
+
     if (ackReceived) {
       ackReceived = false;
     } else {
@@ -78,9 +86,17 @@ public class Heartbeat implements Consumer<SmallD> {
 
     sendHeartbeat(smalld);
 
-    heartbeat =
-        heartbeatExecutor.schedule(
-            () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
+    heartbeatExecutor.schedule(
+        () -> startScheduledHeartbeats(smalld, interval), interval, TimeUnit.MILLISECONDS);
+  }
+
+  private void awaitBarrier() {
+    try {
+      runningBarrier.await();
+    } catch (InterruptedException ignored) {
+      Thread.currentThread().interrupt();
+    } catch (BrokenBarrierException ignored) {
+    }
   }
 
   private void onHeartbeat(SmallD smalld) {

@@ -44,6 +44,8 @@ class TestHeartbeat {
     assertTwoHeartbeats(0, 1);
 
     smalld.receivePayload(ready(1500));
+    assertHeartbeat(0, 1);
+    smalld.receivePayload(heartbeatAck());
     assertTwoHeartbeats(1, 2);
   }
 

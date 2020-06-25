@@ -6,9 +6,9 @@ This bot will respond with the message "pong" when a user sends "++ping".
 
 To complete this project you should already have a token for your bot account.
 To run your bot you should have invited it to a server also.
-The fine folks of [discord.py](https://discordpy.readthedocs.io/) have a write up on how to do that [on their site](https://discordpy.readthedocs.io/en/latest/discord.html)
+The fine folks of [discord.py](https://discordpy.readthedocs.io/) have a write up on how to do that [on their site](https://discordpy.readthedocs.io/en/latest/discord.html).
 
-The full code, as will be completed by the end of this guide, is available on [GitHub](https://github.com/princesslana/smalld-gettingstarted/tree/master/java)
+The full code, as will be completed by the end of this guide, is available on [GitHub](https://github.com/princesslana/smalld-gettingstarted/tree/master/java).
 
 
 ## Setup
@@ -88,7 +88,7 @@ public class PingBot {
 }
 ```
 
-We can now test our our maven compilation and run setup by executing
+We can now test our maven compilation and run setup by executing
 ```bash
 $ mvn compile exec:java
 ```
@@ -117,6 +117,7 @@ public class PingBot {
 ```
 
 In this code we:
+
 * Create a `SmallD` instance, using a token read from a Java system property (we don't want to hardcode the token in our code)
 * Ensure the creation is done within a try-with-resources block, to ensure it'll be closed correctly
 * Run our `SmallD` instance
@@ -137,9 +138,10 @@ We want it to recognize when a "ping" message is sent and respond by sending a "
 To do this we need to understand the [message create](https://discord.com/developers/docs/topics/gateway#message-create) event and the [create message](https://discord.com/developers/docs/resources/channel#create-message) resource.
 
 We want our listener to:
+
 * Parse the payload as JSON
 * If it is a message create event with a message content of "ping"
-  * Make a POST to the create message resource with the same channel id as the message create event and a content of "ping"
+    * Make a POST to the create message resource with the same channel id as the message create event and a content of "ping"
 
 This leads to us having the following code:
 ```java
@@ -174,7 +176,7 @@ outline the steps we wanted to take. Now we can proceed to implementing the meth
 
 **isMessageCreate**
 
-By refering to the Discord API docs we know that this payload should have a `op` of zero to indicate and event, and an event type (`t`) equal to `MESSAGE_CREATE`.
+By referring to the Discord API docs we know that this payload should have an `op` of zero to indicate an event, and an event type (`t`) equal to `MESSAGE_CREATE`.
 
 ```java
   private static boolean isMessageCreate(JsonObject json) {
@@ -228,7 +230,7 @@ able to make it respond by sending a `ping` message.
 $ mvn compile exec:java -Dsmalld.token=<insert your token here>
 ```
 
-If it does not work as you expecte take a check of the [GitHub repo](https://github.com/princesslana/smalld-gettingstarted/tree/master/java) to compare it to your code, and if that doesn't work feel free to get in touch via the details [here.](https://github.com/princesslana/smalld/blob/master/CONTRIBUTING.md)
+If it does not work as you expected check the [GitHub repo](https://github.com/princesslana/smalld-gettingstarted/tree/master/java) to compare it to your code, and if that doesn't work feel free to get in touch. 
 
 Happy Coding!
 

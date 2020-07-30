@@ -181,8 +181,18 @@ public class SmallD implements AutoCloseable {
 
   /** Close the current connection to Discord, clean up resources, and reconnect. */
   public void reconnect() {
+    close(4900, "To be resumed...");
+  }
+
+  /** Close the connection, clean up resources, and stop running. */
+  public void close() {
+    running = false;
+    close(1000, "Closed.");
+  }
+
+  private void close(int status, String reason) {
     if (gatewayWebSocket != null) {
-      gatewayWebSocket.close(1000, "Closed.");
+      gatewayWebSocket.close(status, reason);
       gatewayWebSocket = null;
     }
 
@@ -192,12 +202,6 @@ public class SmallD implements AutoCloseable {
       closeGate.countDown();
       closeGate = null;
     }
-  }
-
-  /** Close the connection, clean up resources, and stop running. */
-  public void close() {
-    running = false;
-    reconnect();
   }
 
   /** Run until closed. */

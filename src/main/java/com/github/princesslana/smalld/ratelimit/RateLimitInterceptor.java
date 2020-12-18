@@ -101,6 +101,8 @@ public class RateLimitInterceptor implements Interceptor {
   }
 
   private Optional<Long> headerAsLong(Response response, String header) {
-    return Optional.ofNullable(response.header(header)).map(Long::parseLong);
+    return Optional.ofNullable(response.header(header))
+        .map(Double::parseDouble)
+        .map(Double::longValue);
   }
 }

@@ -88,8 +88,9 @@ public class Config {
   public static class Builder {
 
     private static final String V6_BASE_URL = "https://discord.com/api/v6";
+    private static final String V8_BASE_URL = "https://discord.com/api/v8";
 
-    private String baseUrl = V6_BASE_URL;
+    private String baseUrl = V8_BASE_URL;
     private Clock clock = Clock.systemUTC();
     private int currentShard = 0;
     private int numberOfShards = 1;
@@ -100,7 +101,7 @@ public class Config {
 
     /**
      * Set the base URL to be used for reaching the Discord API. If not set this will default to
-     * {@code https://discord.com/api/v6}
+     * {@code https://discord.com/api/v8}
      *
      * @param baseUrl the base URL to be used to reach the Discord API
      * @return this
@@ -108,6 +109,24 @@ public class Config {
     public Builder setBaseUrl(String baseUrl) {
       this.baseUrl = baseUrl;
       return this;
+    }
+
+    /**
+     * Set the base URL to that of the v6 Discord API.
+     *
+     * @return this
+     */
+    public Builder v6() {
+      return setBaseUrl(V6_BASE_URL);
+    }
+
+    /**
+     * Set the base URL to that of the v8 Discord API.
+     *
+     * @return this
+     */
+    public Builder v8() {
+      return setBaseUrl(V8_BASE_URL);
     }
 
     /**

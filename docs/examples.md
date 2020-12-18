@@ -9,7 +9,7 @@ amount of code.
 ## For the Basics
 
 There are example bots included in the github repository
-[here.](https://github.com/princesslana/smalld/tree/master/src/main/java/com/github/princesslana/smalld/examples)
+[here.](https://github.com/princesslana/smalld/tree/main/src/main/java/com/github/princesslana/smalld/examples)
 To run these you will need to setup your bot token in the `SMALLD_TOKEN` environment variable.
 Then:
 

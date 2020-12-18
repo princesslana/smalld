@@ -186,7 +186,7 @@ Now our ping bot is complete. We can run it with the command:
 $ SMALLD_TOKEN=<your token here> bundle exec rake run:pingbot
 ```
 
-If it does not work as you expecte take a check of the [GitHub repo](https://github.com/princesslana/smalld-gettingstarted/tree/master/ruby) to compare it to your code, and if that doesn't work feel free to get in touch via the details [here.](https://github.com/princesslana/smalld/blob/master/CONTRIBUTING.md)
+If it does not work as you expecte take a check of the [GitHub repo](https://github.com/princesslana/smalld-gettingstarted/tree/master/ruby) to compare it to your code, and if that doesn't work feel free to get in touch via the details [here.](https://github.com/princesslana/smalld/blob/main/CONTRIBUTING.md)
 
 Happy Coding!
 

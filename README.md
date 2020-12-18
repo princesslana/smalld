@@ -51,7 +51,7 @@ Add the dependency:
   <dependency>
     <groupId>com.github.princesslana</groupId>
     <artifactId>smalld</artifactId>
-    <version>master-SNAPSHOT</version>
+    <version>main-SNAPSHOT</version>
   </dependency>
 ```
 

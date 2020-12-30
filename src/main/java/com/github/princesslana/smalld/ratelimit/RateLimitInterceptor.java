@@ -11,14 +11,19 @@ import java.util.stream.Stream;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** OkHttp {@link Interceptor} that enforces rate limits on HTTP requests. */
 public class RateLimitInterceptor implements Interceptor {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RateLimitInterceptor.class);
 
   private final Clock clock;
 
   private RateLimit globalRateLimit = RateLimit.allowAll();
 
+  private Map<RateLimitBucket, RateLimitBucket> bucketIds = new ConcurrentHashMap<>();
   private Map<RateLimitBucket, RateLimit> resourceRateLimit = new ConcurrentHashMap<>();
 
   /**
@@ -36,6 +41,9 @@ public class RateLimitInterceptor implements Interceptor {
     getRateLimitForPath(chain.request()).acquire();
 
     Response response = chain.proceed(chain.request());
+
+    getRateLimitBucket(response)
+        .ifPresent(b -> bucketIds.put(getBucketForPath(chain.request()), b));
 
     getRateLimit(response).ifPresent(rl -> setRateLimitForPath(chain.request(), rl));
 
@@ -56,12 +64,26 @@ public class RateLimitInterceptor implements Interceptor {
     return response;
   }
 
+  private RateLimitBucket getBucketForPath(Request request) {
+    RateLimitBucket rl = RateLimitBucket.from(request);
+    return bucketIds.getOrDefault(rl, rl);
+  }
+
   private RateLimit getRateLimitForPath(Request request) {
-    return resourceRateLimit.getOrDefault(RateLimitBucket.from(request), RateLimit.allowAll());
+    return resourceRateLimit.getOrDefault(getBucketForPath(request), RateLimit.allowAll());
   }
 
   private void setRateLimitForPath(Request request, RateLimit rateLimit) {
-    resourceRateLimit.put(RateLimitBucket.from(request), rateLimit);
+    RateLimitBucket bucket = getBucketForPath(request);
+
+    LOG.debug(
+        "Set Rate Limit: {} {} -> {} -> {}",
+        request.method(),
+        request.url().encodedPath(),
+        bucket,
+        rateLimit);
+
+    resourceRateLimit.put(getBucketForPath(request), rateLimit);
   }
 
   private Optional<Instant> getRateLimitExpiry(Response response) {
@@ -84,6 +106,10 @@ public class RateLimitInterceptor implements Interceptor {
 
   private Optional<Instant> getRateLimitReset(Response response) {
     return headerAsLong(response, "X-RateLimit-Reset").map(Instant::ofEpochMilli);
+  }
+
+  private Optional<RateLimitBucket> getRateLimitBucket(Response response) {
+    return Optional.ofNullable(response.header("X-RateLimit-Bucket")).map(RateLimitBucket::ofId);
   }
 
   private boolean isGlobalRateLimit(Response response) {

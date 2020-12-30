@@ -29,12 +29,6 @@ class TestRateLimitBucket {
   }
 
   @Test
-  void from_whenBulkDelete_shouldBeSameBucket() {
-    Assertions.assertThat(RateLimitBucket.from("GET", "/channels/123/messages/bulk-delete"))
-        .isEqualTo(RateLimitBucket.from("GET", "/channels/123/messages/bulk_delete"));
-  }
-
-  @Test
   void from_whenMessageIdVaries_shouldBeSameBucket() {
     Assertions.assertThat(RateLimitBucket.from("GET", "/channels/123/messages/888"))
         .isEqualTo(RateLimitBucket.from("GET", "/channels/123/messages/999"));

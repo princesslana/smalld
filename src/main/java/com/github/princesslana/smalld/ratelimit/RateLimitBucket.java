@@ -1,13 +1,9 @@
 package com.github.princesslana.smalld.ratelimit;
 
-import com.github.princesslana.smalld.SmallDException;
-import java.io.IOException;
-import java.util.Collection;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import okhttp3.Request;
@@ -18,10 +14,8 @@ import okhttp3.Request;
  */
 public class RateLimitBucket {
 
-  private static final Collection<Mapping> MAPPINGS = loadBucketMappings();
-
-  private static final Mapping DELETE_MESSAGE_MAPPING =
-      Mapping.of("/channels/(\\d+)/messages/(\\d+)", "DELETE /channels/$1/messages/{message.id}");
+  private static final Set<String> MAJOR_PARAMETERS =
+      Stream.of("channels", "guilds", "webhooks").collect(Collectors.toSet());
 
   private String bucket;
 
@@ -55,20 +49,14 @@ public class RateLimitBucket {
     return String.format("RateLimitBucket(%s)", bucket);
   }
 
-  private static Collection<Mapping> loadBucketMappings() {
-    try {
-      Properties mappings = new Properties();
-
-      mappings.load(RateLimitBucket.class.getResourceAsStream("rate_limit_buckets.properties"));
-
-      return mappings
-          .entrySet()
-          .stream()
-          .map(e -> Mapping.of((String) e.getKey(), (String) e.getValue()))
-          .collect(Collectors.toList());
-    } catch (IOException e) {
-      throw new SmallDException(e);
-    }
+  /**
+   * Creats a {@code RateLimitBucket} from an id.
+   *
+   * @param id the id
+   * @return the {@code RateLimitBucket} for the given id
+   */
+  public static RateLimitBucket ofId(String id) {
+    return new RateLimitBucket(id);
   }
 
   /**
@@ -79,18 +67,7 @@ public class RateLimitBucket {
    * @return the {@code RateLimitBucket} for the given method and path
    */
   public static RateLimitBucket from(String method, String path) {
-    Stream<Mapping> deleteMessage =
-        method.equalsIgnoreCase("DELETE") ? Stream.of(DELETE_MESSAGE_MAPPING) : Stream.of();
-
-    String bucket =
-        Stream.concat(deleteMessage, MAPPINGS.stream())
-            .map(m -> m.replaceIn(path))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .findFirst()
-            .orElse(path);
-
-    return new RateLimitBucket(bucket);
+    return new RateLimitBucket(method + " " + toRoute(path));
   }
 
   /**
@@ -103,25 +80,26 @@ public class RateLimitBucket {
     return from(request.method(), request.url().encodedPath());
   }
 
-  /** A Mapping between a request path and a {@link RateLimitBucket}. */
-  private static class Mapping {
+  private static String toRoute(String path) {
+    Deque<String> r = new ArrayDeque<>();
 
-    private final Pattern from;
-    private final String to;
-
-    public Mapping(Pattern from, String to) {
-      this.from = from;
-      this.to = to;
+    for (String s : path.split("/")) {
+      if (isSnowflake(s) && !MAJOR_PARAMETERS.contains(r.peekLast())) {
+        r.addLast("{id}");
+      } else {
+        r.add(s);
+      }
     }
 
-    public Optional<String> replaceIn(String path) {
-      Matcher m = from.matcher(path);
+    return String.join("/", r);
+  }
 
-      return m.matches() ? Optional.of(m.replaceAll(to)) : Optional.empty();
+  private static boolean isSnowflake(String s) {
+    for (int i = 0; i < s.length(); i++) {
+      if (!Character.isDigit(s.charAt(i))) {
+        return false;
+      }
     }
-
-    public static Mapping of(String from, String to) {
-      return new Mapping(Pattern.compile(from), to);
-    }
+    return s.length() > 0;
   }
 }

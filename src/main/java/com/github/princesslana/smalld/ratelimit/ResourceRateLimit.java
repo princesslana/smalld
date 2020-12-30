@@ -2,6 +2,7 @@ package com.github.princesslana.smalld.ratelimit;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 
 /**
  * A {@link RateLimit} that allows permits for Discord resources. The rate limiting method is that
@@ -40,5 +41,12 @@ public class ResourceRateLimit implements RateLimit {
     }
 
     remaining--;
+  }
+
+  @Override
+  public String toString() {
+    return String.format(
+        "ResourceRateLimit(remaining=%s, reset=%s)",
+        remaining, DateTimeFormatter.ISO_INSTANT.format(reset));
   }
 }

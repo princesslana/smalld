@@ -100,7 +100,11 @@ public class HttpClient implements AutoCloseable {
    */
   public String send(
       String path, UnaryOperator<Request.Builder> build, Map<String, Object> parameters) {
-    HttpUrl.Builder urlBuilder = HttpUrl.get(config.getBaseUrl()).newBuilder().addPathSegment(path);
+
+    HttpUrl.Builder urlBuilder =
+        HttpUrl.get(config.getBaseUrl())
+            .newBuilder()
+            .addPathSegments(path.startsWith("/") ? path.substring(1) : path);
 
     parameters.forEach(
         (string, object) -> urlBuilder.addQueryParameter(string, String.valueOf(object)));

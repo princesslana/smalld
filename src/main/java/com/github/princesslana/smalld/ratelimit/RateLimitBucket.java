@@ -11,6 +11,24 @@ import okhttp3.Request;
 /**
  * A bucket for {@link RateLimit}s. We can determine the appropriate bucket from the request method
  * and path.
+ *
+ * <p>A bucket can be either a bucket id, or a (method,route) pair. A route is a http request path
+ * but with all ids that are not major parameters ignored, as per Discord's rate limiting
+ * specifications.
+ *
+ * <p>A request path is converted to a route as follows:
+ *
+ * <ol>
+ *   <li>Split the path into segments
+ *   <li>For each segment determine if it is a snowflake. This is done by checking if each character
+ *       is numeric.
+ *   <li>If a sgement is a snowflake remote it, unless the previous segment indicates it is a major
+ *       parameter.
+ * </ol>
+ *
+ * <p>For example, <code>/channels/123/messages/789</code> is split into four segments. Both 123 and
+ * 789 are identified as snowflakes. 789 will be removed, as the previous segment is "messages",
+ * which is not a major parameter. 123 will be kept, as "channels" is a major parameter.
  */
 public class RateLimitBucket {
 

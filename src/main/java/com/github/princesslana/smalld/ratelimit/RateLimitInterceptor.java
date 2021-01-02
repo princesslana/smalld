@@ -14,7 +14,25 @@ import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** OkHttp {@link Interceptor} that enforces rate limits on HTTP requests. */
+/**
+ * OkHttp {@link Interceptor} that enforces rate limits on HTTP requests.
+ *
+ * <ol>
+ *   <li>We receive a (method,path) from the HTTP request
+ *   <li>We convert this to a (method,route). A route is the request path, but only keep the ids of
+ *       the major parameters as defined by Discord
+ *   <li>We check if this (method,route) maps to a previously seen bucket id
+ *   <li>
+ *   <li>Look up and acquire permission from the rate limit we have stored for that bucket id or for
+ *       the (method,route) pair.
+ *   <li>Make the request if permission acquired.
+ *   <li>If we receive a bucket id, store the (method,route) to bucket id mapping for future lookup.
+ *   <li>If we receive rate limit information store that against the bucket id, or if we didn't
+ *       receive a bucket id, againwt the (method,route).
+ * </ol>
+ *
+ * <p>See {@link RateLimitBucket} for the logic used when converting a path to a route.
+ */
 public class RateLimitInterceptor implements Interceptor {
 
   private static final Logger LOG = LoggerFactory.getLogger(RateLimitInterceptor.class);

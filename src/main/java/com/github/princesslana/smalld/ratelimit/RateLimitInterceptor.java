@@ -118,12 +118,12 @@ public class RateLimitInterceptor implements Interceptor {
     return Stream.of(reset, retryAfter).filter(Optional::isPresent).map(Optional::get).findFirst();
   }
 
-  private Optional<Integer> getRetryAfter(Response response) {
-    return headerAsInteger(response, "Retry-After");
+  private Optional<Long> getRetryAfter(Response response) {
+    return headerAsLong(response, "Retry-After");
   }
 
   private Optional<Instant> getRateLimitReset(Response response) {
-    return headerAsInteger(response, "X-RateLimit-Reset").map(Instant::ofEpochSecond);
+    return headerAsLong(response, "X-RateLimit-Reset").map(Instant::ofEpochSecond);
   }
 
   private Optional<RateLimitBucket> getRateLimitBucket(Response response) {
@@ -138,15 +138,15 @@ public class RateLimitInterceptor implements Interceptor {
   }
 
   private Optional<RateLimit> getRateLimit(Response response) {
-    Optional<Integer> remaining = headerAsInteger(response, "X-RateLimit-Remaining");
+    Optional<Long> remaining = headerAsLong(response, "X-RateLimit-Remaining");
     Optional<Instant> reset = getRateLimitReset(response);
 
     return remaining.flatMap(rem -> reset.map(res -> new ResourceRateLimit(clock, rem, res)));
   }
 
-  private Optional<Integer> headerAsInteger(Response response, String header) {
+  private Optional<Long> headerAsLong(Response response, String header) {
     return Optional.ofNullable(response.header(header))
         .map(Double::parseDouble)
-        .map(Double::intValue);
+        .map(Double::longValue);
   }
 }

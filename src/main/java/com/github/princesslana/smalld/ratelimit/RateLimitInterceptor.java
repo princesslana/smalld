@@ -41,8 +41,8 @@ public class RateLimitInterceptor implements Interceptor {
 
   private RateLimit globalRateLimit = RateLimit.allowAll();
 
-  private Map<RateLimitBucket, RateLimitBucket> bucketIds = new ConcurrentHashMap<>();
-  private Map<RateLimitBucket, RateLimit> resourceRateLimit = new ConcurrentHashMap<>();
+  private final Map<RateLimitBucket, RateLimitBucket> bucketIds = new ConcurrentHashMap<>();
+  private final Map<RateLimitBucket, RateLimit> resourceRateLimit = new ConcurrentHashMap<>();
 
   /**
    * Constructs an instance using the provided source of time.
@@ -113,7 +113,7 @@ public class RateLimitInterceptor implements Interceptor {
             .map(Instant::from);
 
     Optional<Instant> retryAfter =
-        getRetryAfter(response).map(responseDate.orElse(clock.instant())::plusMillis);
+        getRetryAfter(response).map(responseDate.orElse(clock.instant())::plusSeconds);
 
     return Stream.of(reset, retryAfter).filter(Optional::isPresent).map(Optional::get).findFirst();
   }
@@ -123,7 +123,7 @@ public class RateLimitInterceptor implements Interceptor {
   }
 
   private Optional<Instant> getRateLimitReset(Response response) {
-    return headerAsLong(response, "X-RateLimit-Reset").map(Instant::ofEpochMilli);
+    return headerAsLong(response, "X-RateLimit-Reset").map(Instant::ofEpochSecond);
   }
 
   private Optional<RateLimitBucket> getRateLimitBucket(Response response) {

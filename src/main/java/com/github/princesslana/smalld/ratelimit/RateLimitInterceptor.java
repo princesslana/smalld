@@ -113,7 +113,7 @@ public class RateLimitInterceptor implements Interceptor {
             .map(Instant::from);
 
     Optional<Instant> retryAfter =
-        getRetryAfter(response).map(responseDate.orElse(clock.instant())::plusMillis);
+        getRetryAfter(response).map(responseDate.orElse(clock.instant())::plusSeconds);
 
     return Stream.of(reset, retryAfter).filter(Optional::isPresent).map(Optional::get).findFirst();
   }

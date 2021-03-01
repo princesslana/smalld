@@ -8,7 +8,7 @@ import java.util.Arrays;
  */
 public enum GatewayIntent {
   GUILDS(1 << 0),
-  GUILD_MEMEBERS(1 << 1),
+  GUILD_MEMBERS(1 << 1),
   GUILD_BANS(1 << 2),
   GUILD_EMOJIS(1 << 3),
   GUILD_INTEGRATIONS(1 << 4),
@@ -24,12 +24,12 @@ public enum GatewayIntent {
   DIRECT_MESSAGE_TYPING(1 << 14);
 
   public static final int ALL = GatewayIntent.toMask(GatewayIntent.values());
-  public static final int PRIVILEGED = GatewayIntent.toMask(GUILD_PRESENCES, GUILD_MEMEBERS);
+  public static final int PRIVILEGED = GatewayIntent.toMask(GUILD_PRESENCES, GUILD_MEMBERS);
   public static final int UNPRIVILEGED = ALL ^ PRIVILEGED;
 
   private final int mask;
 
-  private GatewayIntent(int mask) {
+  GatewayIntent(int mask) {
     this.mask = mask;
   }
 

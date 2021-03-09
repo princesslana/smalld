@@ -23,7 +23,7 @@ public interface RateLimit {
    *
    * @return the created RateLimit
    */
-  public static RateLimit allowAll() {
+  static RateLimit allowAll() {
     return () -> {};
   }
 
@@ -34,7 +34,7 @@ public interface RateLimit {
    * @param expiry the time until which permit requests will be denied
    * @return the created RateLimit
    */
-  public static RateLimit denyUntil(Clock clock, Instant expiry) {
+  static RateLimit denyUntil(Clock clock, Instant expiry) {
     return () -> {
       if (clock.instant().isBefore(expiry)) {
         throw new RateLimitException(expiry);

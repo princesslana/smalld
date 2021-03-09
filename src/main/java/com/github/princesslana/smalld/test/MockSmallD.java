@@ -30,7 +30,7 @@ public class MockSmallD extends SmallD {
 
   /** Construct a {@code MockSmallD} instance. */
   public MockSmallD() {
-    super(Config.builder().setToken(MOCK_TOKEN).build());
+    super(Config.builder().token(MOCK_TOKEN).build());
   }
 
   /**

@@ -37,7 +37,7 @@ class TestSmallD {
 
   @BeforeEach
   public void sujbect() throws Exception {
-    subject = new SmallD(Config.builder().setToken(MOCK_TOKEN).build(), http);
+    subject = new SmallD(Config.builder().token(MOCK_TOKEN).build(), http);
 
     inOrder = Mockito.inOrder(http);
 

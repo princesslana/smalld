@@ -3,12 +3,14 @@ package com.github.princesslana.smalld;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import java.util.function.Consumer;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Sends heartbeat payloads to the Discord Gateway. It will begin sending heartbeats after the HELLO
  * payload is received and reconnects if a heartbeat ack is not received. Sends a HEARTBEAT when a
  * HEARTBEAT event is received.
  */
+@RequiredArgsConstructor
 public class Heartbeat implements Consumer<SmallD> {
 
   private final SequenceNumber sequenceNumber;
@@ -18,15 +20,6 @@ public class Heartbeat implements Consumer<SmallD> {
   private volatile long heartbeatInterval;
 
   private volatile boolean ackReceived = false;
-
-  /**
-   * Constructs an instance that will send heartbeats.
-   *
-   * @param sequenceNumber source from which to retrieve last seen sequence number
-   */
-  public Heartbeat(SequenceNumber sequenceNumber) {
-    this.sequenceNumber = sequenceNumber;
-  }
 
   @Override
   public void accept(SmallD smalld) {

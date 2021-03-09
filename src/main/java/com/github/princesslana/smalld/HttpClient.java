@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -13,8 +14,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * {@code HttpClient} that can be used to connect to Discord. Applies rate limiting, attaches the
@@ -25,9 +24,8 @@ import org.slf4j.LoggerFactory;
  * HttpClient} can be reused after {@link #close()} is called, as a new {@link OkHttpClient}
  * instance will be created.
  */
+@Slf4j
 public class HttpClient implements AutoCloseable {
-
-  private static final Logger LOG = LoggerFactory.getLogger(HttpClient.class);
 
   private final Config config;
   private final String userAgent;
@@ -120,7 +118,7 @@ public class HttpClient implements AutoCloseable {
       String status = response.message();
       String body = response.body().string();
 
-      LOG.debug("HTTP Response: [{} {}] {}", code, status, body);
+      log.debug("HTTP Response: [{} {}] {}", code, status, body);
 
       if (response.code() >= 500) {
         throw new HttpException.ServerException(code, status, body);

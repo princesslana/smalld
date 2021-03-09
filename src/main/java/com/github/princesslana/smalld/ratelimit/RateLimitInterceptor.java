@@ -8,11 +8,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * OkHttp {@link Interceptor} that enforces rate limits on HTTP requests.
@@ -33,9 +33,9 @@ import org.slf4j.LoggerFactory;
  *
  * <p>See {@link RateLimitBucket} for the logic used when converting a path to a route.
  */
+@Slf4j
+@RequiredArgsConstructor
 public class RateLimitInterceptor implements Interceptor {
-
-  private static final Logger LOG = LoggerFactory.getLogger(RateLimitInterceptor.class);
 
   private final Clock clock;
 
@@ -43,15 +43,6 @@ public class RateLimitInterceptor implements Interceptor {
 
   private final Map<RateLimitBucket, RateLimitBucket> bucketIds = new ConcurrentHashMap<>();
   private final Map<RateLimitBucket, RateLimit> resourceRateLimit = new ConcurrentHashMap<>();
-
-  /**
-   * Constructs an instance using the provided source of time.
-   *
-   * @param clock the clock to fetch the current time from
-   */
-  public RateLimitInterceptor(Clock clock) {
-    this.clock = clock;
-  }
 
   @Override
   public Response intercept(Interceptor.Chain chain) throws IOException {
@@ -94,7 +85,7 @@ public class RateLimitInterceptor implements Interceptor {
   private void setRateLimitForPath(Request request, RateLimit rateLimit) {
     RateLimitBucket bucket = getBucketForPath(request);
 
-    LOG.debug(
+    log.debug(
         "Set Rate Limit: {} {} -> {} -> {}",
         request.method(),
         request.url().encodedPath(),

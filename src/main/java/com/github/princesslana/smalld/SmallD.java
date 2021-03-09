@@ -16,6 +16,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.Request;
@@ -23,8 +25,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * {@code SmallD} is the entry point for the SmallD API. The methods here can be divided into three
@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
  * <p>The Resource methods allow for sending of requests to Discord's REST API. These are named
  * after the possible HTTP methods (e.g., {@link #get(String)}).
  */
+@RequiredArgsConstructor
+@Slf4j
 public class SmallD implements AutoCloseable {
 
   public static final ThreadFactory DAEMON_THREAD_FACTORY =
@@ -48,15 +50,11 @@ public class SmallD implements AutoCloseable {
         return t;
       };
 
-  private static final Logger LOG = LoggerFactory.getLogger(SmallD.class);
-
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-
   private static final Set<Integer> FATAL_WEBSOCKET_CLOSE_CODES =
       new HashSet<>(Arrays.asList(4004, 4010, 4011, 4012, 4013, 4014));
 
   private final Config config;
-
   private final HttpClient http;
 
   private final List<Consumer<String>> gatewayPayloadListeners = new ArrayList<>();
@@ -81,21 +79,6 @@ public class SmallD implements AutoCloseable {
    */
   public SmallD(Config config) {
     this(config, new HttpClient(config));
-  }
-
-  /**
-   * Construct a {@code SmallD} instance with the provided config and HTTP client.
-   *
-   * <p>Note that this does not setup any of the default functionality such as identifying,
-   * resuming, etc. In the common case you will want one of the static {@code create} or {@code run}
-   * methods.
-   *
-   * @param config the config to use with this instance
-   * @param http the HTTP client to use with this instance
-   */
-  public SmallD(Config config, HttpClient http) {
-    this.config = config;
-    this.http = http;
   }
 
   /**
@@ -154,17 +137,16 @@ public class SmallD implements AutoCloseable {
           @Override
           public void onClosing(WebSocket ws, int code, String reason) {
             if (FATAL_WEBSOCKET_CLOSE_CODES.contains(code)) {
-              LOG.error("Unrecoverable gateway closure: ({}) {}", code, reason);
+              log.error("Unrecoverable gateway closure: ({}) {}", code, reason);
               close();
             } else {
-              LOG.info("Gateway closed: ({}) {}", code, reason);
+              log.info("Gateway closed: ({}) {}", code, reason);
               reconnect();
             }
           }
         };
 
-    gatewayWebSocket =
-        http.newWebSocket(request, new LoggingWebSocketListener(LOG, onMessageListener));
+    gatewayWebSocket = http.newWebSocket(request, new LoggingWebSocketListener(onMessageListener));
   }
 
   private void await() {
@@ -212,7 +194,7 @@ public class SmallD implements AutoCloseable {
         connect();
         await();
       } catch (SmallDException e) {
-        LOG.warn("Exception during run", e);
+        log.warn("Exception during run", e);
       }
 
       if (running) {
@@ -241,7 +223,7 @@ public class SmallD implements AutoCloseable {
     try {
       gatewayPayloadListeners.forEach(l -> l.accept(text));
     } catch (Exception e) {
-      LOG.warn("Exception thrown when notifying listeners of gateway payload", e);
+      log.warn("Exception thrown when notifying listeners of gateway payload", e);
     }
   }
 
@@ -251,7 +233,7 @@ public class SmallD implements AutoCloseable {
    * @param text the payload to send
    */
   public void sendGatewayPayload(String text) {
-    LOG.debug("Gateway Send: {}", text);
+    log.debug("Gateway Send: {}", text);
     gatewayWebSocket.send(text);
   }
 
@@ -294,7 +276,7 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
    */
   public String get(String path, Map<String, Object> parameters) {
-    LOG.debug("HTTP GET {}, {}", path, parameters);
+    log.debug("HTTP GET {}, {}", path, parameters);
 
     return http.send(path, Request.Builder::get, parameters);
   }
@@ -346,7 +328,7 @@ public class SmallD implements AutoCloseable {
    */
   public String post(
       String path, String payload, Map<String, Object> parameters, Attachment... attachments) {
-    LOG.debug("HTTP POST {}: {}, {}", path, payload, parameters);
+    log.debug("HTTP POST {}: {}, {}", path, payload, parameters);
 
     boolean isMultipart = attachments.length > 0;
 
@@ -411,7 +393,7 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
    */
   public String put(String path, String payload, Map<String, Object> parameters) {
-    LOG.debug("HTTP PUT {}: {}, {}", path, payload, parameters);
+    log.debug("HTTP PUT {}: {}, {}", path, payload, parameters);
 
     return http.send(path, b -> b.put(jsonBody(payload)), parameters);
   }
@@ -432,7 +414,7 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
    */
   public String patch(String path, String payload) {
-    LOG.debug("HTTP PATCH {}: {}", path, payload);
+    log.debug("HTTP PATCH {}: {}", path, payload);
 
     return http.send(path, b -> b.patch(jsonBody(payload)), Collections.emptyMap());
   }
@@ -452,7 +434,7 @@ public class SmallD implements AutoCloseable {
    * @throws HttpException for any non 2xx/4xx/5xx ressponse
    */
   public String delete(String path) {
-    LOG.debug("HTTP DELETE {}", path);
+    log.debug("HTTP DELETE {}", path);
 
     return http.send(path, Request.Builder::delete, Collections.emptyMap());
   }
@@ -485,7 +467,7 @@ public class SmallD implements AutoCloseable {
    * @return the created SmallD instance
    */
   public static SmallD create(String token) {
-    return create(Config.builder().setToken(token).build());
+    return create(Config.builder().token(token).build());
   }
 
   /**
@@ -519,7 +501,7 @@ public class SmallD implements AutoCloseable {
    * @param bot code to setup the bot to run
    */
   public static void run(String token, Consumer<SmallD> bot) {
-    run(Config.builder().setToken(token).build(), bot);
+    run(Config.builder().token(token).build(), bot);
   }
 
   /**

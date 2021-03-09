@@ -1,29 +1,18 @@
 package com.github.princesslana.smalld;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
-import org.slf4j.Logger;
 
 /** A {@link WebSocketListener} that logs all events received. */
+@Slf4j
+@RequiredArgsConstructor
 public class LoggingWebSocketListener extends WebSocketListener {
 
-  private final Logger log;
-
   private final WebSocketListener wrapped;
-
-  /**
-   * Create an instance that logs to the given logger and delegates to the provided {@link
-   * WebSocketListener}.
-   *
-   * @param log the {@link Logger} to log events to
-   * @param wrapped the listener to delegate events to
-   */
-  public LoggingWebSocketListener(Logger log, WebSocketListener wrapped) {
-    this.log = log;
-    this.wrapped = wrapped;
-  }
 
   @Override
   public void onClosed(WebSocket ws, int code, String reason) {

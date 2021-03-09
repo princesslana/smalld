@@ -1,6 +1,9 @@
 package com.github.princesslana.smalld;
 
+import lombok.Getter;
+
 /** Exception thrown on non succesful HTTP requests. */
+@Getter
 public class HttpException extends SmallDException {
 
   private final int code;
@@ -20,33 +23,6 @@ public class HttpException extends SmallDException {
     this.code = code;
     this.status = status;
     this.body = body;
-  }
-
-  /**
-   * Returns the HTTP status code of the response that triggered this exception.
-   *
-   * @return the HTTP status code
-   */
-  public int getCode() {
-    return code;
-  }
-
-  /**
-   * Returns the HTTP status message of the response that triggered this exception.
-   *
-   * @return the HTTP status message
-   */
-  public String getStatus() {
-    return status;
-  }
-
-  /**
-   * Returns the HTTP body of the response that triggered this exception.
-   *
-   * @return the HTTP body
-   */
-  public String getBody() {
-    return body;
   }
 
   /** Exception thrown for HTTP 4xx responses. */

@@ -4,25 +4,18 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Identifies with the Discord Gateway. When a HELLO event is received it will send an IDENTIFY or
  * RESUME payload as necessary. When a RECONNECT event is received it will reconnect.
  */
+@RequiredArgsConstructor
 public class Identify implements Consumer<SmallD> {
 
   private final SequenceNumber sequenceNumber;
 
   private String sessionId;
-
-  /**
-   * Constructs an instance that will identify and resume as appropriate.
-   *
-   * @param sequenceNumber source for obtaining the last seen sequence number
-   */
-  public Identify(SequenceNumber sequenceNumber) {
-    this.sequenceNumber = sequenceNumber;
-  }
 
   @Override
   public void accept(SmallD smalld) {

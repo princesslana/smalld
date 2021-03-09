@@ -20,7 +20,7 @@ class TestLoggingWebSocketListener {
   @BeforeEach
   void subject() {
     spy = new WebSocketListenerSpy();
-    subject = new LoggingWebSocketListener(LOG, spy);
+    subject = new LoggingWebSocketListener(spy);
   }
 
   @Test

@@ -8,17 +8,20 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import okio.Buffer;
 
 /**
  * An attachment for a multipart request. Content is read from the source provided for the
  * attachment on every call to {@link #getBytes()}.
  */
+@RequiredArgsConstructor
 public class Attachment {
 
-  private final String filename;
+  @Getter private final String filename;
 
-  private final String mimeType;
+  @Getter private final String mimeType;
 
   private final Supplier<InputStream> stream;
 
@@ -53,39 +56,6 @@ public class Attachment {
    */
   public Attachment(String filename, String mimeType, URL url) {
     this(filename, mimeType, supplyFrom(url::openStream));
-  }
-
-  /**
-   * Create an instance with content from an {@link InputStream}. The {@code stream} parameter is a
-   * supplier from which an {@link InputStream} can be obtained. When retrieving the bytes from this
-   * supplier it will use it to open an {@link InputStream}, read, and then close it.
-   *
-   * @param filename the filename of this attachment
-   * @param mimeType the mime type of this attachment
-   * @param stream a supplier that can create an InputStream to get the content
-   */
-  public Attachment(String filename, String mimeType, Supplier<InputStream> stream) {
-    this.filename = filename;
-    this.mimeType = mimeType;
-    this.stream = stream;
-  }
-
-  /**
-   * Return the filename.
-   *
-   * @return the filename
-   */
-  public String getFilename() {
-    return filename;
-  }
-
-  /**
-   * Return the mime type.
-   *
-   * @return the mime type
-   */
-  public String getMimeType() {
-    return mimeType;
   }
 
   /**

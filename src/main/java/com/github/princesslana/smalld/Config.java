@@ -89,8 +89,9 @@ public class Config {
 
     private static final String V6_BASE_URL = "https://discord.com/api/v6";
     private static final String V8_BASE_URL = "https://discord.com/api/v8";
+    private static final String V9_BASE_URL = "https://discord.com/api/v9";
 
-    private String baseUrl = V8_BASE_URL;
+    private String baseUrl = V9_BASE_URL;
     private Clock clock = Clock.systemUTC();
     private int currentShard = 0;
     private int numberOfShards = 1;
@@ -127,6 +128,15 @@ public class Config {
      */
     public Builder v8() {
       return setBaseUrl(V8_BASE_URL);
+    }
+
+    /**
+     * Set the base URL to that of the v9 Discord API.
+     *
+     * @return this
+     */
+    public Builder v9() {
+      return setBaseUrl(V9_BASE_URL);
     }
 
     /**

@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test;
 class TestConfig {
 
   @Test
-  void getBaseUrl_whenDefaults_shouldBeV6Url() {
+  void getBaseUrl_whenDefaults_shouldBeV9Url() {
     Config cfg = Config.builder().build();
-    Assertions.assertThat(cfg.getBaseUrl()).isEqualTo("https://discord.com/api/v8");
+    Assertions.assertThat(cfg.getBaseUrl()).isEqualTo("https://discord.com/api/v9");
   }
 
   @Test

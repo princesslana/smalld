@@ -69,7 +69,7 @@
     <plugin.site.version>3.7.1</plugin.site.version>
     <plugin.sortpom.version>2.10.0</plugin.sortpom.version>
     <plugin.source.version>3.0.1</plugin.source.version>
-    <plugin.spotless.version>1.16.0</plugin.spotless.version>
+    <plugin.spotless.version>1.20.0</plugin.spotless.version>
     <plugin.surefire.version>3.0.0-M4</plugin.surefire.version>
   </properties>
   <dependencyManagement>
